@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.png" alt="Backstab The Trade logo" width="160" />
+  <img src="./logo.png" alt="Backstab The Trade logo" />
 </p>
 
 <h1 align="center">Backstab The Trade</h1>
@@ -74,14 +74,13 @@ conditions, or testing needs.
 
 ## Support and Help
 
-Backstab The Trade is still in development, so some issues are expected. Feel free to report problems, share feedback, or send logs when needed.
+Backstab The Trade is still in development, so some issues are expected. The Event Tracker and trade history can help capture useful debug information. 
 
-If you are testing, the Event Tracker and trade history can help capture useful debug
-information.
+Feel free to report problems, share feedback, or send logs when needed.
 
-If you run into issues, you can also join the support Discord and report them there:
+If you run into issues, you can also join the [Discord](https://discord.gg/bxuPSWxwm) and report them.
 
-[Discord](https://discord.gg/bxuPSWxwm)
+
 
 ## Donation
 
