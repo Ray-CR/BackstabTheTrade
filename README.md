@@ -1,8 +1,9 @@
-<p align="center">
-  <img src="./logo.png" alt="Backstab The Trade logo" />
-</p>
 
-<h1 align="center"><span style="color:#d11a1a;">Backstab The Trade</span></h1>
+<h1 align="center">🟥 <b>Backstab The Trade</b></h1>
+
+<p align="center">
+  <img src="./logo.png" width="150"/>
+</p>
 
 Free your mouse and fingers from repetitive trading.
 

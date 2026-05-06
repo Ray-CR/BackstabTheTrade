@@ -5,6 +5,7 @@ obj/
 *.user
 *.suo
 *.zip
+!repo/BackstabTheTrade/latest.zip
 *.7z
 *.rar
 *.log

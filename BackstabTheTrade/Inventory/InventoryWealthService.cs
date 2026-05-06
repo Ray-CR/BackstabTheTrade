@@ -145,7 +145,7 @@ public sealed class InventoryWealthService
             .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
             .Select(entry => new InventoryTradePlanEntry(
                 entry.ItemId,
-                entry.Name,
+                entry.DisplayName,
                 entry.UnitPrice,
                 entry.Quantity,
                 entry.TotalValue,
@@ -251,7 +251,7 @@ public sealed class InventoryWealthService
             var entry = candidates[i];
             entries.Add(new InventoryTradePlanEntry(
                 entry.ItemId,
-                entry.Name,
+                entry.DisplayName,
                 entry.UnitPrice,
                 quantities[i],
                 quantities[i] * entry.UnitPrice,
@@ -293,7 +293,7 @@ public sealed class InventoryWealthService
             long totalValue = quantity * entry.UnitPrice;
             entries.Add(new InventoryTradePlanEntry(
                 entry.ItemId,
-                entry.Name,
+                entry.DisplayName,
                 entry.UnitPrice,
                 quantity,
                 totalValue,
@@ -403,7 +403,8 @@ public sealed class InventoryWealthService
                 if (slot == null)
                     continue;
 
-                var itemId = NormalizeItemId(slot->ItemId);
+                var rawItemId = slot->ItemId;
+                var itemId = NormalizeItemId(rawItemId);
                 var quantity = (long)slot->Quantity;
                 if (itemId == 0 || quantity <= 0)
                     continue;
@@ -420,10 +421,11 @@ public sealed class InventoryWealthService
 
                 var unitPrice = GetUnitPrice(itemName, itemRow);
                 var maxTradeQuantity = GetMaxTradeQuantity(itemRow);
-                if (!entries.TryGetValue(itemId, out var entry))
+                bool isHighQuality = rawItemId >= 1_000_000;
+                if (!entries.TryGetValue(rawItemId, out var entry))
                 {
-                    entry = new InventoryWealthAccumulator(itemId, itemName, unitPrice, maxTradeQuantity);
-                    entries[itemId] = entry;
+                    entry = new InventoryWealthAccumulator(rawItemId, itemId, itemName, isHighQuality, unitPrice, maxTradeQuantity);
+                    entries[rawItemId] = entry;
                 }
 
                 entry.Quantity += quantity;
@@ -452,7 +454,11 @@ public sealed class InventoryWealthService
 
             entryList[entryIndex++] = new InventoryWealthEntry(
                 accumulator.ItemId,
+                accumulator.BaseItemId,
                 accumulator.Name,
+                accumulator.DisplayName,
+                accumulator.QualityLabel,
+                accumulator.IsHighQuality,
                 accumulator.UnitPrice,
                 accumulator.Quantity,
                 totalValue,
@@ -554,7 +560,7 @@ public sealed class InventoryWealthService
             long total = maxCount * entry.UnitPrice;
             entries.Add(new InventoryTradePlanEntry(
                 entry.ItemId,
-                entry.Name,
+                entry.DisplayName,
                 entry.UnitPrice,
                 maxCount,
                 total,
@@ -674,8 +680,19 @@ public sealed class InventoryWealthService
 
 internal sealed class InventoryWealthAccumulator(uint itemId, string name, long unitPrice, long maxTradeQuantity)
 {
+    public InventoryWealthAccumulator(uint itemId, uint baseItemId, string name, bool isHighQuality, long unitPrice, long maxTradeQuantity)
+        : this(itemId, name, unitPrice, maxTradeQuantity)
+    {
+        BaseItemId = baseItemId;
+        IsHighQuality = isHighQuality;
+    }
+
     public uint ItemId { get; } = itemId;
+    public uint BaseItemId { get; }
     public string Name { get; } = name;
+    public string DisplayName => IsHighQuality ? $"{Name} (HQ)" : $"{Name} (NQ)";
+    public string QualityLabel => IsHighQuality ? "HQ" : "NQ";
+    public bool IsHighQuality { get; }
     public long UnitPrice { get; } = unitPrice;
     public long MaxTradeQuantity { get; } = maxTradeQuantity;
     public long Quantity { get; set; }
@@ -692,7 +709,11 @@ internal sealed class InventoryWealthEntryComparer : IComparer<InventoryWealthEn
         if (valueCompare != 0)
             return valueCompare;
 
-        return StringComparer.OrdinalIgnoreCase.Compare(left.Name, right.Name);
+        int nameCompare = StringComparer.OrdinalIgnoreCase.Compare(left.Name, right.Name);
+        if (nameCompare != 0)
+            return nameCompare;
+
+        return right.IsHighQuality.CompareTo(left.IsHighQuality);
     }
 }
 
@@ -714,7 +735,11 @@ internal readonly record struct TradePack(int EntryIndex, int Quantity, int Scal
 
 public readonly record struct InventoryWealthEntry(
     uint ItemId,
+    uint BaseItemId,
     string Name,
+    string DisplayName,
+    string QualityLabel,
+    bool IsHighQuality,
     long UnitPrice,
     long Quantity,
     long TotalValue,
