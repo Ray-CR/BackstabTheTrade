@@ -70,7 +70,7 @@ conditions, or testing needs.
 
 1. Type `/xlsettings` in the in-game chat to open the Dalamud settings window.
 2. Go to the `Experimental` tab.
-3. Copy `https://github.com/Ray-CR/BackstabTheTrade/blob/main/pluginmaster.json` and paste it into the available text input field.
+3. Copy `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/refs/heads/main/pluginmaster.json` and paste it into the available text input field.
 4. Search for `Backstab The Trade` and install it.
 
 ## Support and Help
@@ -79,7 +79,7 @@ Backstab The Trade is still in development, so some issues are expected. The Eve
 
 Feel free to report problems, share feedback, or send logs when needed.
 
-If you run into issues, you can also join the [Discord](https://discord.gg/bxuPSWxwm) and report them.
+If you run into issues, you can also join the [Discord](https://discord.gg/AErttDexe8) and report them.
 
 
 
