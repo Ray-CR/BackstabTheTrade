@@ -2,7 +2,7 @@
   <img src="./logo.png" alt="Backstab The Trade logo" />
 </p>
 
-<h1 align="center">Backstab The Trade</h1>
+<h1 align="center"><span style="color:#d11a1a;">Backstab The Trade</span></h1>
 
 Free your mouse and fingers from repetitive trading.
 
@@ -86,10 +86,14 @@ If you run into issues, you can also join the [Discord](https://discord.gg/bxuPS
 
 Donations are appreciated, and you can support development here:
 
-[Ko-fi](https://ko-fi.com/ray_cr#)
+[![Support me on Ko-fi][def]](https://ko-fi.com/ray_cr#)
+
 
 Donations are completely optional, and the plugin is free to use for everyone.
 
 ## License
 
 This project is released under the GNU General Public License v3.0 (`GPL-3.0`).
+
+
+[def]: https://ko-fi.com/img/githubbutton_sm.svg
