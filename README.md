@@ -84,12 +84,12 @@ If you run into issues, you can also join the [Discord](https://discord.gg/bxuPS
 
 ## Donation
 
-Donations are appreciated, and you can support development here:
+Donations are appreciated and completely optional,, and you can support development here:
 
 [![Support me on Ko-fi][def]](https://ko-fi.com/ray_cr#)
 
 
-Donations are completely optional, and the plugin is free to use for everyone.
+The plugin is free to use for everyone and all the donation mainly use for plugin development.
 
 ## License
 
