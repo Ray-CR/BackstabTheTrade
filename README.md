@@ -51,12 +51,12 @@ conditions, or testing needs.
 
 ### Payer
 
-1. Target a player and right-click them in game.
+1. Target a player and right-click the player, then press the `Backstab The Trade` to open the plugin.
 2. Select the mode you want to use.
 3. Enter the gil amount or item quantity you want to trade.
 4. Confirm the target player.
 5. Press `Auto Start`.
-6. The plugin will process the trade automatically while you supervise it.
+6. The plugin will process the trade automatically.
 
 ### Receiver
 
