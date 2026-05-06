@@ -1,8 +1,8 @@
 
-<h1 align="center">🟥 <b>Backstab The Trade</b></h1>
+<h1 align="center"><b>Backstab The Trade</b></h1>
 
 <p align="center">
-  <img src="./logo.png" width="150"/>
+  <img src="./logo.png" width="200"/>
 </p>
 
 Free your mouse and fingers from repetitive trading.
@@ -70,7 +70,7 @@ conditions, or testing needs.
 
 1. Type `/xlsettings` in the in-game chat to open the Dalamud settings window.
 2. Go to the `Experimental` tab.
-3. Copy your custom plugin repository link and paste it into the available text input field.
+3. Copy `https://github.com/Ray-CR/BackstabTheTrade/blob/main/pluginmaster.json` and paste it into the available text input field.
 4. Search for `Backstab The Trade` and install it.
 
 ## Support and Help

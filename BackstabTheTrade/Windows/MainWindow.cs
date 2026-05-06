@@ -25,6 +25,13 @@ public sealed class MainWindow : Window, IDisposable
         TimeSettings,
     }
 
+    private enum ManualSortColumn
+    {
+        Name,
+        Quantity,
+        UnitPrice,
+    }
+
     private readonly BackstabTheTrade _plugin;
     private readonly TradeManager _tm;
     private readonly Action _openTracker;
@@ -52,6 +59,8 @@ public sealed class MainWindow : Window, IDisposable
     private bool _cachedManualShowSelectedOnly;
     private int _manualSelectionVersion;
     private int _cachedManualSelectionVersion = -1;
+    private ManualSortColumn _manualSortColumn = ManualSortColumn.Name;
+    private bool _manualSortAscending = true;
     private Task<InventoryTradePlan>? _pendingPlanTask;
     private readonly Dictionary<uint, long> _manualItemQuantities = new();
     private int _seenCompletedRunSerial;
@@ -387,13 +396,6 @@ public sealed class MainWindow : Window, IDisposable
             ImGui.Spacing();
             ImGui.TextWrapped(_tm.StatusMessage);
         }
-
-        if (!string.IsNullOrWhiteSpace(_plugin.LastAgentInventoryContextSummary))
-        {
-            ImGui.Spacing();
-            ImGui.TextDisabled("Last AgentInventoryContext:");
-            ImGui.TextWrapped(_plugin.LastAgentInventoryContextSummary);
-        }
     }
 
     private void DrawGilMode()
@@ -476,14 +478,53 @@ public sealed class MainWindow : Window, IDisposable
         var visibleEntries = GetCachedManualVisibleEntries(snapshot);
 
         ImGui.BeginChild("manualItemSelection", new Vector2(-1, 260), true);
-        if (ImGui.BeginTable("manualItemSelectionTable", 5, ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY))
+        if (ImGui.BeginTable("manualItemSelectionTable", 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY))
         {
+            ImGui.TableSetupColumn("All", ImGuiTableColumnFlags.WidthFixed, 42);
             ImGui.TableSetupColumn("Qty", ImGuiTableColumnFlags.WidthFixed, 82);
             ImGui.TableSetupColumn("Item", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("Quality", ImGuiTableColumnFlags.WidthFixed, 62);
             ImGui.TableSetupColumn("Have", ImGuiTableColumnFlags.WidthFixed, 68);
             ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthFixed, 78);
             ImGui.TableSetupColumn("Stacks", ImGuiTableColumnFlags.WidthFixed, 62);
-            ImGui.TableHeadersRow();
+
+            ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+
+            ImGui.TableSetColumnIndex(0);
+            bool allSelected = visibleEntries.Count > 0 && visibleEntries.All(entry => GetManualQuantity(entry.ItemId) >= entry.Quantity);
+            bool toggleAll = allSelected;
+            if (ImGui.Checkbox("##manual_select_all", ref toggleAll) && toggleAll != allSelected)
+            {
+                foreach (var entry in visibleEntries)
+                {
+                    if (toggleAll)
+                        _manualItemQuantities[entry.ItemId] = entry.Quantity;
+                    else
+                        _manualItemQuantities.Remove(entry.ItemId);
+                }
+
+                _manualSelectionVersion++;
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Trade all currently visible items");
+
+            ImGui.TableSetColumnIndex(1);
+            ImGui.TableHeader("Qty");
+
+            ImGui.TableSetColumnIndex(2);
+            DrawManualSortHeader("Item", ManualSortColumn.Name);
+
+            ImGui.TableSetColumnIndex(3);
+            ImGui.TableHeader("Quality");
+
+            ImGui.TableSetColumnIndex(4);
+            DrawManualSortHeader("Have", ManualSortColumn.Quantity);
+
+            ImGui.TableSetColumnIndex(5);
+            DrawManualSortHeader("Value", ManualSortColumn.UnitPrice);
+
+            ImGui.TableSetColumnIndex(6);
+            ImGui.TableHeader("Stacks");
 
             var clipper = new ImGuiListClipper();
             clipper.Begin(visibleEntries.Count);
@@ -497,6 +538,19 @@ public sealed class MainWindow : Window, IDisposable
                     ImGui.TableNextRow();
 
                     ImGui.TableSetColumnIndex(0);
+                    bool tradeAll = GetManualQuantity(entry.ItemId) >= entry.Quantity && entry.Quantity > 0;
+                    if (ImGui.Checkbox("##tradeall", ref tradeAll))
+                    {
+                        if (tradeAll)
+                            _manualItemQuantities[entry.ItemId] = entry.Quantity;
+                        else
+                            _manualItemQuantities.Remove(entry.ItemId);
+
+                        _manualSelectionVersion++;
+                        selected = (int)Math.Min(int.MaxValue, GetManualQuantity(entry.ItemId));
+                    }
+
+                    ImGui.TableSetColumnIndex(1);
                     ImGui.SetNextItemWidth(-1);
                     if (ImGui.InputInt("##qty", ref selected))
                     {
@@ -514,18 +568,21 @@ public sealed class MainWindow : Window, IDisposable
                         _manualSelectionVersion++;
                     }
 
-                    ImGui.TableSetColumnIndex(1);
+                    ImGui.TableSetColumnIndex(2);
                     ImGui.TextUnformatted(entry.Name);
                     if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip($"{entry.Name}\nstack {entry.MaxTradeQuantity:N0}\nunit value {entry.UnitPrice:N0}");
-
-                    ImGui.TableSetColumnIndex(2);
-                    ImGui.TextUnformatted(entry.Quantity.ToString("N0"));
+                        ImGui.SetTooltip($"{entry.DisplayName}\nstack {entry.MaxTradeQuantity:N0}\nunit value {entry.UnitPrice:N0}");
 
                     ImGui.TableSetColumnIndex(3);
-                    ImGui.TextUnformatted(entry.UnitPrice.ToString("N0"));
+                    ImGui.TextUnformatted(entry.QualityLabel);
 
                     ImGui.TableSetColumnIndex(4);
+                    ImGui.TextUnformatted(entry.Quantity.ToString("N0"));
+
+                    ImGui.TableSetColumnIndex(5);
+                    ImGui.TextUnformatted(entry.UnitPrice.ToString("N0"));
+
+                    ImGui.TableSetColumnIndex(6);
                     ImGui.TextDisabled(entry.StackSources.Count.ToString("N0"));
                     ImGui.PopID();
                 }
@@ -757,10 +814,59 @@ public sealed class MainWindow : Window, IDisposable
         _cachedManualVisibleEntries = snapshot.Entries
             .Where(entry => !_manualShowSelectedOnly || GetManualQuantity(entry.ItemId) > 0)
             .Where(entry => string.IsNullOrWhiteSpace(_manualItemFilter) ||
-                            entry.Name.Contains(_manualItemFilter, StringComparison.OrdinalIgnoreCase))
+                            entry.Name.Contains(_manualItemFilter, StringComparison.OrdinalIgnoreCase) ||
+                            entry.DisplayName.Contains(_manualItemFilter, StringComparison.OrdinalIgnoreCase) ||
+                            entry.QualityLabel.Contains(_manualItemFilter, StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
+        _cachedManualVisibleEntries = SortManualEntries(_cachedManualVisibleEntries);
+
         return _cachedManualVisibleEntries;
+    }
+
+    private IReadOnlyList<InventoryWealthEntry> SortManualEntries(IReadOnlyList<InventoryWealthEntry> entries)
+    {
+        var ordered = _manualSortColumn switch
+        {
+            ManualSortColumn.Quantity => _manualSortAscending
+                ? entries.OrderBy(entry => entry.Quantity)
+                    .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(entry => entry.IsHighQuality ? 1 : 0)
+                : entries.OrderByDescending(entry => entry.Quantity)
+                    .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenByDescending(entry => entry.IsHighQuality ? 1 : 0),
+            ManualSortColumn.UnitPrice => _manualSortAscending
+                ? entries.OrderBy(entry => entry.UnitPrice)
+                    .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(entry => entry.IsHighQuality ? 1 : 0)
+                : entries.OrderByDescending(entry => entry.UnitPrice)
+                    .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenByDescending(entry => entry.IsHighQuality ? 1 : 0),
+            _ => _manualSortAscending
+                ? entries.OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(entry => entry.IsHighQuality ? 1 : 0)
+                : entries.OrderByDescending(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenByDescending(entry => entry.IsHighQuality ? 1 : 0),
+        };
+
+        return ordered.ToArray();
+    }
+
+    private void DrawManualSortHeader(string label, ManualSortColumn column)
+    {
+        string suffix = _manualSortColumn == column ? (_manualSortAscending ? " ^" : " v") : string.Empty;
+        if (ImGui.Selectable(label + suffix, false, ImGuiSelectableFlags.SpanAllColumns))
+        {
+            if (_manualSortColumn == column)
+                _manualSortAscending = !_manualSortAscending;
+            else
+            {
+                _manualSortColumn = column;
+                _manualSortAscending = true;
+            }
+
+            _cachedManualSelectionVersion = -1;
+        }
     }
 
     private static bool SamePlan(InventoryTradePlan left, InventoryTradePlan right)

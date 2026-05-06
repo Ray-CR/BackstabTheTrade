@@ -25,7 +25,7 @@
     "IconUrl": "https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/logo.png",
     "DownloadLinkInstall": "https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/repo/BackstabTheTrade/latest.zip",
     "DownloadLinkUpdate": "https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/repo/BackstabTheTrade/latest.zip",
-    "DownloadLinkTesting": "https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/repo/BackstabTheTrade/latest.zip",
+    "DownloadLinkTesting": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta/BackstabTheTrade_beta.zip",
     "IsTestingExclusive": false
   }
 ]

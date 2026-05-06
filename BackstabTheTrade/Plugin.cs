@@ -1,6 +1,7 @@
 using Dalamud.Game.Command;
 using Dalamud.Game.Addon.Events;
 using Dalamud.Game.Gui.ContextMenu;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -28,6 +29,7 @@ public sealed class BackstabTheTrade : IDalamudPlugin
     [PluginService] internal static ITargetManager         TargetManager   { get; private set; } = null!;
     [PluginService] internal static ISigScanner            SigScanner      { get; private set; } = null!;
     [PluginService] internal static IDataManager           DataManager     { get; private set; } = null!;
+    [PluginService] internal static IToastGui              ToastGui        { get; private set; } = null!;
 
     private const string CommandName = "/autotrade";
 
@@ -35,7 +37,6 @@ public sealed class BackstabTheTrade : IDalamudPlugin
     public EventTracker   EventTracker  { get; init; }
     public ChatSender     ChatSender    { get; init; }
     public InventoryWealthService InventoryWealth { get; init; }
-    public string LastAgentInventoryContextSummary { get; private set; } = string.Empty;
     private readonly PluginUI     _ui;
     private readonly TradeManager _tradeManager;
 
@@ -54,6 +55,7 @@ public sealed class BackstabTheTrade : IDalamudPlugin
         });
 
         ContextMenu.OnMenuOpened += OnMenuOpened;
+        ToastGui.ErrorToast += OnErrorToast;
         Framework.Update += OnFrameworkUpdate;
         PluginInterface.UiBuilder.Draw         += _ui.Draw;
         PluginInterface.UiBuilder.OpenConfigUi += _ui.Toggle;
@@ -70,7 +72,6 @@ public sealed class BackstabTheTrade : IDalamudPlugin
         if (args.Target is MenuTargetInventory inventoryTarget)
         {
             var summary = BuildAgentInventoryContextSummary(inventoryTarget);
-            LastAgentInventoryContextSummary = summary;
             EventTracker.LogExternal($"[AgentInventoryContext] MenuOpened {summary}");
             var manualFullAutoHandled = false;
 
@@ -275,17 +276,17 @@ public sealed class BackstabTheTrade : IDalamudPlugin
             if (targetItem == null)
                 return false;
 
-            var rawItemId = TryReadProperty(targetItem, "BaseItemId") ?? TryReadProperty(targetItem, "ItemId");
+            var rawItemId = TryReadProperty(targetItem, "ItemId") ?? TryReadProperty(targetItem, "BaseItemId");
             switch (rawItemId)
             {
                 case uint u:
-                    itemId = InventoryWealthService.NormalizeItemId(u);
+                    itemId = u;
                     break;
                 case int i when i > 0:
-                    itemId = InventoryWealthService.NormalizeItemId((uint)i);
+                    itemId = (uint)i;
                     break;
                 case long l when l > 0:
-                    itemId = InventoryWealthService.NormalizeItemId((uint)l);
+                    itemId = (uint)l;
                     break;
             }
 
@@ -515,9 +516,23 @@ public sealed class BackstabTheTrade : IDalamudPlugin
 
     private void OnCommand(string command, string args) => _ui.Toggle();
 
+    private void OnErrorToast(ref SeString message, ref bool isHandled)
+    {
+        var text = message.TextValue?.Trim() ?? string.Empty;
+        if (text.Length == 0)
+            return;
+
+        if (!text.Contains("Too far away", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        EventTracker.LogExternal($"[ErrorToast] {text}");
+        _tradeManager.NotifyTooFarAwaySignal("ErrorToast", text);
+    }
+
     public void Dispose()
     {
         ContextMenu.OnMenuOpened               -= OnMenuOpened;
+        ToastGui.ErrorToast                    -= OnErrorToast;
         Framework.Update                       -= OnFrameworkUpdate;
         CommandManager.RemoveHandler(CommandName);
         PluginInterface.UiBuilder.Draw         -= _ui.Draw;

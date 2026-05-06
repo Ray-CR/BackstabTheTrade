@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Addon.Lifecycle;
@@ -330,7 +330,6 @@ public sealed class TradeManager : IDisposable
         out string reason)
     {
         reason = string.Empty;
-        itemId = InventoryWealthService.NormalizeItemId(itemId);
 
         if (!IsRunning || Mode == AutoTradeMode.Gil || _step != Step.WaitItemSlots)
         {
@@ -420,7 +419,6 @@ public sealed class TradeManager : IDisposable
 
     private string TryPreparePlannedContextMenuTrade(uint itemId, string itemName, bool clickTradeAfterReady, TimeSpan triggerDelay)
     {
-        itemId = InventoryWealthService.NormalizeItemId(itemId);
         TradeWindowOpen = IsAddonVisible("Trade");
 
         if (!IsRunning || Mode == AutoTradeMode.Gil || ActiveItemPlan.Entries.Count == 0)
@@ -2127,7 +2125,22 @@ public sealed class TradeManager : IDisposable
 
         AddTradeHistory("Stopped", BuildCurrentTradeSummary(), detail);
         TrackImportant($"[TargetMonitor] {detail} Auto trade stopped immediately.");
+        StopTradeRun("Target player changed - trade stopped.");
+    }
 
+    public void NotifyTooFarAwaySignal(string source, string message)
+    {
+        TrackImportant($"[TargetMonitor] {source} reported: {message}");
+        if (!IsRunning)
+            return;
+
+        var detail = $"Game reported target player {TargetName.Trim()} is too far away to continue trading.";
+        AddTradeHistory("Stopped", BuildCurrentTradeSummary(), detail);
+        StopTradeRun("Game reported target too far away - trade stopped.");
+    }
+
+    private void StopTradeRun(string statusMessage)
+    {
         _autoConfirmCurrentInputOnly = false;
         _plannedContextMenuItemTrade = false;
         _contextMenuTradeAfterReady = false;
@@ -2146,7 +2159,7 @@ public sealed class TradeManager : IDisposable
         _visibleInventoryDispatchMatched = -1;
         ResetContextApiState();
         _activeInventoryBlockNumber = 0;
-        StatusMessage = "Target player changed - trade stopped.";
+        StatusMessage = statusMessage;
         CompletedRunSerial++;
     }
 
@@ -2364,11 +2377,11 @@ public sealed class TradeManager : IDisposable
                 return false;
             }
 
-            var normalizedSlotItemId = InventoryWealthService.NormalizeItemId(slot->ItemId);
-            if (normalizedSlotItemId != chunk.ItemId)
+            var slotItemId = slot->GetItemId();
+            if (slotItemId != chunk.ItemId)
             {
                 status = $"Source slot changed for {chunk.Name}; waiting for manual right-click.";
-                LogContextApiSkipOnce(matchedChunkCount, $"[ManualFullAuto] ContextAPI skipped for {chunk.Name} ({chunk.ItemId}): source {source.ContainerType}:{source.SlotIndex} now itemId={slot->ItemId} normalized={normalizedSlotItemId}.");
+                LogContextApiSkipOnce(matchedChunkCount, $"[ManualFullAuto] ContextAPI skipped for {chunk.Name} ({chunk.ItemId}): source {source.ContainerType}:{source.SlotIndex} now itemId={slot->ItemId}.");
                 return false;
             }
 
@@ -2555,7 +2568,7 @@ public sealed class TradeManager : IDisposable
         {
             var slot = slots[i];
             var chunk = batch.Chunks[i];
-            if (InventoryWealthService.NormalizeItemId(slot.ItemId) == chunk.ItemId && slot.Quantity == chunk.Quantity)
+            if (slot.GetItemId() == chunk.ItemId && slot.Quantity == chunk.Quantity)
                 matched++;
             else
                 break;

@@ -403,8 +403,8 @@ public sealed class InventoryWealthService
                 if (slot == null)
                     continue;
 
-                var rawItemId = slot->ItemId;
-                var itemId = NormalizeItemId(rawItemId);
+                var rawItemId = slot->GetItemId();
+                var itemId = slot->GetBaseItemId();
                 var quantity = (long)slot->Quantity;
                 if (itemId == 0 || quantity <= 0)
                     continue;
@@ -421,10 +421,11 @@ public sealed class InventoryWealthService
 
                 var unitPrice = GetUnitPrice(itemName, itemRow);
                 var maxTradeQuantity = GetMaxTradeQuantity(itemRow);
-                bool isHighQuality = rawItemId >= 1_000_000;
+                bool isHighQuality = slot->IsHighQuality();
+                bool canBeHighQuality = isHighQuality || CanItemBeHighQuality(itemRow);
                 if (!entries.TryGetValue(rawItemId, out var entry))
                 {
-                    entry = new InventoryWealthAccumulator(rawItemId, itemId, itemName, isHighQuality, unitPrice, maxTradeQuantity);
+                    entry = new InventoryWealthAccumulator(rawItemId, itemId, itemName, isHighQuality, canBeHighQuality, unitPrice, maxTradeQuantity);
                     entries[rawItemId] = entry;
                 }
 
@@ -539,6 +540,14 @@ public sealed class InventoryWealthService
         {
             return false;
         }
+    }
+
+    private static bool CanItemBeHighQuality(Item itemRow)
+    {
+        return GetOptionalBoolProperty(itemRow, "CanBeHq") ||
+               GetOptionalBoolProperty(itemRow, "CanBeHQ") ||
+               GetOptionalBoolProperty(itemRow, "IsHighQuality") ||
+               GetOptionalBoolProperty(itemRow, "AlwaysCollectable");
     }
 
     public static bool IsSalvagedTradeItem(string itemName)
@@ -680,19 +689,21 @@ public sealed class InventoryWealthService
 
 internal sealed class InventoryWealthAccumulator(uint itemId, string name, long unitPrice, long maxTradeQuantity)
 {
-    public InventoryWealthAccumulator(uint itemId, uint baseItemId, string name, bool isHighQuality, long unitPrice, long maxTradeQuantity)
+    public InventoryWealthAccumulator(uint itemId, uint baseItemId, string name, bool isHighQuality, bool canBeHighQuality, long unitPrice, long maxTradeQuantity)
         : this(itemId, name, unitPrice, maxTradeQuantity)
     {
         BaseItemId = baseItemId;
         IsHighQuality = isHighQuality;
+        CanBeHighQuality = canBeHighQuality;
     }
 
     public uint ItemId { get; } = itemId;
     public uint BaseItemId { get; }
     public string Name { get; } = name;
-    public string DisplayName => IsHighQuality ? $"{Name} (HQ)" : $"{Name} (NQ)";
-    public string QualityLabel => IsHighQuality ? "HQ" : "NQ";
+    public string DisplayName => !CanBeHighQuality ? Name : IsHighQuality ? $"{Name} (HQ)" : $"{Name} (NQ)";
+    public string QualityLabel => !CanBeHighQuality ? string.Empty : IsHighQuality ? "HQ" : "NQ";
     public bool IsHighQuality { get; }
+    public bool CanBeHighQuality { get; }
     public long UnitPrice { get; } = unitPrice;
     public long MaxTradeQuantity { get; } = maxTradeQuantity;
     public long Quantity { get; set; }

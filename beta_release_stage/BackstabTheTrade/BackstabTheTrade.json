@@ -1,0 +1,24 @@
+{
+  "Author": "Ray-CR",
+  "Name": "Backstab The Trade",
+  "InternalName": "BackstabTheTrade",
+  "AssemblyVersion": "1.0.0.0",
+  "Description": "Free your mouse and fingers from repetitive trading",
+  "ApplicableVersion": "any",
+  "RepoUrl": "https://github.com/Ray-CR/BackstabTheTrade",
+  "Tags": [
+    "trade",
+    "gil",
+    "helper"
+  ],
+  "CategoryTags": [
+    "Utility"
+  ],
+  "DalamudApiLevel": 15,
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": true,
+  "LoadPriority": 0,
+  "Punchline": "Free your mouse and fingers from repetitive trading.",
+  "AcceptsFeedback": true
+}
