@@ -2,7 +2,7 @@
 <h1 align="center"><b>Backstab The Trade</b></h1>
 
 <p align="center">
-  <img src="./images/logo.png" width="200"/>
+  <img src="./images/icon.png" width="200"/>
 </p>
 
 Free your mouse and fingers from repetitive trading.
