@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.zip
+*.7z
+*.rar
+*.log
+*.tmp
+*.bak
+*.cache
+TestResults/
+package_stage*/
+source_stage*/
