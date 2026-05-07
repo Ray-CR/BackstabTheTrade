@@ -54,16 +54,16 @@ public class Configuration : IPluginConfiguration
     public int PlannedNextItemWaitMs { get; set; } = 20;
 
     // Receiver helper: wait after seeing the other player's offer before pressing Trade.
-    public int ReceiverOfferSettleDelayMs { get; set; } = 500;
+    public int ReceiverOfferSettleDelayMs { get; set; } = 300;
 
     // Receiver helper: wait after pressing Trade before retrying if confirmation has not opened.
-    public int ReceiverTradeRetryDelayMs { get; set; } = 1000;
+    public int ReceiverTradeRetryDelayMs { get; set; } = 400;
 
     // Receiver helper: internal poll interval while waiting for stable offer / confirm.
-    public int ReceiverPollDelayMs { get; set; } = 100;
+    public int ReceiverPollDelayMs { get; set; } = 50;
 
     // Receiver helper: faster internal poll interval right after partner offer changes.
-    public int ReceiverChangedPollDelayMs { get; set; } = 75;
+    public int ReceiverChangedPollDelayMs { get; set; } = 40;
 
     // Receiver helper: automatically click Trade and confirm Yes when receiving a trade.
     public bool ReceiverModeAutoConfirm { get; set; } = false;
