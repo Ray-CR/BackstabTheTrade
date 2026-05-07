@@ -50,7 +50,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\logo.png" Link="icon.png">
+    <None Include="..\images\icon.png" Link="icon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>icon.png</TargetPath>
     </None>
