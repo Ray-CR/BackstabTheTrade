@@ -315,14 +315,6 @@ public sealed class TradeManager : IDisposable
         }
     }
 
-    public void NoteAgentInventoryContext(string summary)
-    {
-        if (string.IsNullOrWhiteSpace(summary))
-            return;
-
-        StatusMessage = $"AgentInventoryContext EXP: {summary}";
-    }
-
     public bool IsWaitingForPlannedInventoryContext(
         uint itemId,
         InventoryType containerType,

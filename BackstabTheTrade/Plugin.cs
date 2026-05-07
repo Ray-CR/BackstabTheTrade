@@ -84,7 +84,6 @@ public sealed class BackstabTheTrade : IDalamudPlugin
                 {
                     var result = _tradeManager.SchedulePlannedContextMenuTrade(itemId, itemName, true);
                     EventTracker.LogExternal($"[ManualFullAuto] AgentInventoryContext auto-trigger: itemId={itemId}, source={containerType}:{slotIndex}; {result}");
-                    _tradeManager.NoteAgentInventoryContext($"ManualFullAuto auto-trigger: {result}");
                     manualFullAutoHandled = result.Contains("Scheduled", StringComparison.Ordinal) ||
                                             result.Contains("FireCallback sent", StringComparison.Ordinal);
                 }
@@ -92,36 +91,6 @@ public sealed class BackstabTheTrade : IDalamudPlugin
             else if (_tradeManager.IsRunning && _tradeManager.Mode == AutoTradeMode.ItemManual)
             {
                 EventTracker.LogExternal("[ManualFullAuto] AgentInventoryContext extract failed; cannot read item source or item id.");
-            }
-
-            if (_tradeManager.TradeWindowOpen)
-            {
-                if (!manualFullAutoHandled)
-                    _tradeManager.NoteAgentInventoryContext(summary);
-                args.AddMenuItem(CreatePlainMenuItem("Backstab The Trade 1", _ =>
-                {
-                    var usePlannedPath = TryExtractInventoryItemId(inventoryTarget, out var itemId, out var itemName) &&
-                                         _tradeManager.Mode != AutoTradeMode.Gil &&
-                                         _tradeManager.IsRunning &&
-                                         _tradeManager.ActiveItemPlan.Entries.Count > 0;
-                    var result = usePlannedPath
-                        ? _tradeManager.TryRunPlannedContextMenuTrade(itemId, itemName, false)
-                        : _tradeManager.TryRunContextMenuTradeAutoConfirm(false);
-                    EventTracker.LogExternal($"[AutoTrade1] {result}");
-                    _tradeManager.NoteAgentInventoryContext(result);
-                }));
-                args.AddMenuItem(CreatePlainMenuItem("Backstab The Trade 2", _ =>
-                {
-                    var usePlannedPath = TryExtractInventoryItemId(inventoryTarget, out var itemId, out var itemName) &&
-                                         _tradeManager.Mode != AutoTradeMode.Gil &&
-                                         _tradeManager.IsRunning &&
-                                         _tradeManager.ActiveItemPlan.Entries.Count > 0;
-                    var result = usePlannedPath
-                        ? _tradeManager.TryRunPlannedContextMenuTrade(itemId, itemName, true)
-                        : _tradeManager.TryRunContextMenuTradeAutoConfirm(true);
-                    EventTracker.LogExternal($"[AutoTrade2] {result}");
-                    _tradeManager.NoteAgentInventoryContext(result);
-                }));
             }
 
             return;

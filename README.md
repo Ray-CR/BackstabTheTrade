@@ -62,8 +62,8 @@ conditions, or testing needs.
 ### Receiver
 
 1. Open Backstab The Trade.
-2. Click the button to unlock Receiver Mode.
-3. Enable the Receiver Mode checkbox.
+2. Click the Unlock Receiver Mode button.
+3. Clcik the checkbox to enablethe Receiver Mode.
 4. The plugin will automatically press `Trade` in the trade window and `Yes` in the confirmation window.
 
 ## Installation
@@ -76,7 +76,7 @@ conditions, or testing needs.
 
 ## Support and Help
 
-Backstab The Trade is still in development, so some issues are expected. The Event Tracker and trade history can help capture useful debug information. 
+Backstab The Trade is still in development, so some issues are expected.The Event Tracker and trade history can help capture useful debug information. 
 
 Feel free to report problems, share feedback, or send logs when needed.
 
@@ -86,7 +86,7 @@ If you run into issues, you can also join the [Discord](https://discord.gg/AErtt
 
 ## Donation
 
-Donations are appreciated and completely optional,, and you can support development here:
+Donations are appreciated and completely optional,and you can support development here:
 
 [![Support me on Ko-fi][def]](https://ko-fi.com/ray_cr#)
 
