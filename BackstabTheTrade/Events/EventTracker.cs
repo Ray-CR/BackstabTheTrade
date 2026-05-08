@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -1249,7 +1249,7 @@ public sealed class EventTracker : IDisposable
             {
                 var label = TryReadContextMenuItemLabel(list, i);
                 labels.Add($"{i}:{label}");
-                if (tradeIndex < 0 && string.Equals(label, "Trade", StringComparison.OrdinalIgnoreCase))
+                if (tradeIndex < 0 && ClientTextMap.IsTradeContextMenuLabel(label))
                     tradeIndex = i;
             }
 
@@ -1721,6 +1721,7 @@ public sealed class EventTracker : IDisposable
         BackstabTheTrade.AddonLifecycle.UnregisterListener(AddonEvent.PostReceiveEvent, "SelectYesNo", OnSelectYesNoEvent);
     }
 }
+
 
 
 

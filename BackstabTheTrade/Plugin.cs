@@ -1,4 +1,4 @@
-using Dalamud.Game.Command;
+﻿using Dalamud.Game.Command;
 using Dalamud.Game.Addon.Events;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
@@ -491,7 +491,7 @@ public sealed class BackstabTheTrade : IDalamudPlugin
         if (text.Length == 0)
             return;
 
-        if (!text.Contains("Too far away", StringComparison.OrdinalIgnoreCase))
+        if (!ClientTextMap.IsTooFarAwayMessage(text))
             return;
 
         EventTracker.LogExternal($"[ErrorToast] {text}");
@@ -513,4 +513,5 @@ public sealed class BackstabTheTrade : IDalamudPlugin
         _ui.Dispose();
     }
 }
+
 

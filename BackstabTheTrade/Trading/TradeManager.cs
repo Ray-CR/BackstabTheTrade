@@ -1262,7 +1262,7 @@ public sealed class TradeManager : IDisposable
             return false;
 
         var prompt = textNode->NodeText.ToString();
-        return string.Equals(prompt, "Specify quantity.", StringComparison.Ordinal) ||
+        return ClientTextMap.IsSpecifyQuantityPrompt(prompt) ||
                prompt.Contains("quantity", StringComparison.OrdinalIgnoreCase);
     }
 
