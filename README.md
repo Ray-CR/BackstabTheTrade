@@ -1,10 +1,10 @@
 <h1 align="center"><b>Backstab The Trade</b></h1>
 
 <p align="center">
-  <a href="#english"><img alt="English" src="https://img.shields.io/badge/English-Default-8b1e1e?style=for-the-badge" /></a>
-  <a href="#繁體中文"><img alt="繁體中文" src="https://img.shields.io/badge/繁體中文-README-9b2c2c?style=for-the-badge" /></a>
-  <a href="#简体中文"><img alt="简体中文" src="https://img.shields.io/badge/简体中文-README-b23a3a?style=for-the-badge" /></a>
-  <a href="#日本語"><img alt="日本語" src="https://img.shields.io/badge/日本語-README-c44747?style=for-the-badge" /></a>
+  <a href="#english"><img alt="English" src="https://img.shields.io/badge/English-444444?style=flat" /></a>
+  <a href="#繁體中文"><img alt="繁體中文" src="https://img.shields.io/badge/繁體中文-444444?style=flat" /></a>
+  <a href="#简体中文"> <img alt="简体中文" src="https://img.shields.io/badge/简体中文-444444?style=flat" /></a>
+  <a href="#日本語"><img alt="日本語" src="https://img.shields.io/badge/日本語-444444?style=flat" /> </a>
 </p>
 
 <p align="center">
