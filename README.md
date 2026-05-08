@@ -33,11 +33,11 @@ Enter the amount of gil. The plugin builds a trade plan and helps process the tr
 
 ### Item Manual Mode
 
-Select items and enter the quantity you want to trade. The plugin builds a trade plan from your inventory and helps process the trade.
+Select items and enter the quantity. The plugin builds a trade plan from your inventory and helps process the trade.
 
 ### Gil to Item Mode
 
-Enter the amount of gil you want to pay. The plugin builds a trade plan using inventory items with a similar total value.
+Enter the amount of gil. The plugin builds a trade plan using inventory items with a similar total value.
 
 ### Receiver Mode
 
@@ -71,8 +71,6 @@ This project is released under the GNU General Public License v3.0 (`GPL-3.0`).
 <a id="zh-hant"></a>
 
 ## 繁體中文
-
-減少重複交易時對滑鼠和手指的負擔。
 
 Backstab The Trade 是一個 Dalamud 外掛，用來協助處理重複的遊戲內金錢與道具交易。
 
@@ -121,8 +119,6 @@ Time Settings 可調整各種延遲時間，方便配合你的遊戲環境、網
 
 ## 简体中文
 
-减少重复交易时对鼠标和手指的负担。
-
 Backstab The Trade 是一个 Dalamud 插件，用来协助处理重复的游戏内金币与道具交易。
 
 ### Gil Trade Mode
@@ -169,8 +165,6 @@ Time Settings 可调整各种延迟时间，方便配合你的游戏环境、网
 <a id="ja"></a>
 
 ## 日本語
-
-くり返しのトレード操作による負担を減らすためのプラグインです。
 
 Backstab The Trade は、ゲーム内でくり返し行うギル取引やアイテム取引を補助する Dalamud プラグインです。
 
