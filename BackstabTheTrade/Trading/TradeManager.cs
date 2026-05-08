@@ -1307,6 +1307,12 @@ public sealed class TradeManager : IDisposable
         bool confirmWindowOpen = IsAddonVisible("SelectYesno") || IsAddonVisible("SelectYesNo");
         if (confirmWindowOpen)
         {
+            if (!ShouldAutoConfirmReceiverYesNo())
+            {
+                _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
+                return;
+            }
+
             StatusMessage = "Receiver mode: Complete trade? detected - confirming Yes...";
             if (TryConfirmTradeYes())
             {
@@ -1324,7 +1330,7 @@ public sealed class TradeManager : IDisposable
             return;
         }
 
-        if (TryConfirmTradeYes())
+        if (ShouldAutoConfirmReceiverYesNo() && TryConfirmTradeYes())
         {
             _receiverConfirmedForWindow = true;
             _receiverTradeClickedForWindow = true;
@@ -2037,7 +2043,7 @@ public sealed class TradeManager : IDisposable
         if (_receiverConfirmedForWindow)
             return;
 
-        if (!TradeWindowOpen && !IsTradeConfirmWindowVisible())
+        if (!ShouldAutoConfirmReceiverYesNo())
             return;
 
         if (!TryConfirmTradeYes())
@@ -2051,6 +2057,16 @@ public sealed class TradeManager : IDisposable
         TrackVerbose("[ReceiverMode] Complete trade? setup hook detected; Yes/OK fired.");
         StatusMessage = "Receiver mode: Complete trade? detected - confirming Yes...";
         _receiverNextActionAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
+    }
+
+    private unsafe bool ShouldAutoConfirmReceiverYesNo()
+    {
+        return _plugin.Configuration.ReceiverModeAutoConfirm &&
+               (TradeWindowOpen ||
+                _receiverSawTradeWindow ||
+                _receiverOfferSeenForWindow ||
+                _receiverTradeClickedForWindow ||
+                HasIncomingTradeOffer());
     }
 
     private string GetTradeCommandVariant()

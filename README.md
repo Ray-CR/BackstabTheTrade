@@ -1,10 +1,18 @@
 <h1 align="center"><b>Backstab The Trade</b></h1>
 
 <p align="center">
-  <a href="#english"><img alt="English" src="https://img.shields.io/badge/English-Default-8b1e1e?style=for-the-badge" /></a>
-  <a href="#zh-hant"><img alt="繁體中文" src="https://img.shields.io/badge/繁體中文-README-9b2c2c?style=for-the-badge" /></a>
-  <a href="#zh-hans"><img alt="简体中文" src="https://img.shields.io/badge/简体中文-README-b23a3a?style=for-the-badge" /></a>
-  <a href="#ja"><img alt="日本語" src="https://img.shields.io/badge/日本語-README-c44747?style=for-the-badge" /></a>
+  <a href="#english">
+    <img alt="English" src="https://img.shields.io/badge/English-444444?style=flat" />
+  </a>
+  <a href="#zh-hant">
+    <img alt="繁體中文" src="https://img.shields.io/badge/繁體中文-444444?style=flat" />
+  </a>
+  <a href="#zh-hans">
+    <img alt="简体中文" src="https://img.shields.io/badge/简体中文-444444?style=flat" />
+  </a>
+  <a href="#ja">
+    <img alt="日本語" src="https://img.shields.io/badge/日本語-444444?style=flat" />
+  </a>
 </p>
 
 <p align="center">
@@ -25,11 +33,11 @@ Enter the amount of gil. The plugin builds a trade plan and helps process the tr
 
 ### Item Manual Mode
 
-Select and enter the quantity of items. The plugin builds a trade plan from your inventory and helps process the trade.
+Select items and enter the quantity you want to trade. The plugin builds a trade plan from your inventory and helps process the trade.
 
-### Gil to Item Trade Mode
+### Gil to Item Mode
 
-Enter the amount of gil. The plugin builds a trade plan using inventory items with a similar total value.
+Enter the amount of gil you want to pay. The plugin builds a trade plan using inventory items with a similar total value.
 
 ### Receiver Mode
 
@@ -48,10 +56,11 @@ Time Settings let you adjust delays to better match your game client, network, o
 
 1. Type `/xlsettings` in game.
 2. Open the `Experimental` tab.
-3. Copy `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json` and paste it into the available text input field.
-4. Click the `+` button to add it to the list.
-5. Click `Save and Close`.
-6. Search for `Backstab The Trade` and install it.
+3. Copy `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json`.
+4. Paste it into the available repository input box.
+5. Click the `+` button to add it to the list.
+6. Click `Save and Close`.
+7. Search for `Backstab The Trade` and install it.
 
 ### License
 
@@ -73,9 +82,9 @@ Backstab The Trade 是一個 Dalamud 外掛，用來協助處理重複的遊戲�
 
 ### Item Manual Mode
 
-選擇並輸入你想交易的道具數量。外掛會根據你的背包建立交易計畫並協助完成交易。
+選擇道具並輸入你想交易的數量。外掛會根據你的背包建立交易計畫並協助完成交易。
 
-### Gil to Item Trade Mode
+### Gil to Item Mode
 
 輸入你想支付的金額。外掛會從背包中建立接近該價值的道具交易計畫。
 
@@ -96,10 +105,11 @@ Time Settings 可調整各種延遲時間，方便配合你的遊戲環境、網
 
 1. 在遊戲內輸入 `/xlsettings`。
 2. 打開 `Experimental` 分頁。
-3. 複製 `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json` 並貼到可用輸入欄位。
-4. 按下 `+` 將它加入清單。
-5. 按下 `Save and Close`。
-6. 搜尋 `Backstab The Trade` 並安裝。
+3. 複製 `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json`。
+4. 貼到可用的 repository 輸入欄位。
+5. 按下 `+` 將它加入清單。
+6. 按下 `Save and Close`。
+7. 搜尋 `Backstab The Trade` 並安裝。
 
 ### License
 
@@ -121,9 +131,9 @@ Backstab The Trade 是一个 Dalamud 插件，用来协助处理重复的游戏�
 
 ### Item Manual Mode
 
-选择并输入你想交易的道具数量。插件会根据你的背包建立交易计划并协助完成交易。
+选择道具并输入你想交易的数量。插件会根据你的背包建立交易计划并协助完成交易。
 
-### Gil to Item Trade Mode
+### Gil to Item Mode
 
 输入你想支付的金额。插件会从背包中建立接近该价值的道具交易计划。
 
@@ -144,10 +154,11 @@ Time Settings 可调整各种延迟时间，方便配合你的游戏环境、网
 
 1. 在游戏内输入 `/xlsettings`。
 2. 打开 `Experimental` 标签页。
-3. 复制 `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json` 并粘贴到可用输入栏位。
-4. 点击 `+` 将它加入列表。
-5. 点击 `Save and Close`。
-6. 搜索 `Backstab The Trade` 并安装。
+3. 复制 `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json`。
+4. 粘贴到可用的 repository 输入栏位。
+5. 点击 `+` 将它加入列表。
+6. 点击 `Save and Close`。
+7. 搜索 `Backstab The Trade` 并安装。
 
 ### License
 
@@ -169,9 +180,9 @@ Backstab The Trade は、ゲーム内でくり返し行うギル取引やアイ�
 
 ### Item Manual Mode
 
-渡したいアイテム数を選んで入力すると、所持品から取引プランを作成し、取引を補助します。
+アイテムを選び、渡したい数を入力すると、所持品から取引プランを作成し、取引を補助します。
 
-### Gil to Item Trade Mode
+### Gil to Item Mode
 
 支払いたい金額を入力すると、その価値に近いアイテムで取引プランを作成します。
 
@@ -192,10 +203,11 @@ Time Settings では、ゲーム環境やネットワーク、テスト条件に
 
 1. ゲーム内で `/xlsettings` を入力します。
 2. `Experimental` タブを開きます。
-3. `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json` をコピーして入力欄に貼り付けます。
-4. `+` を押して一覧に追加します。
-5. `Save and Close` を押します。
-6. `Backstab The Trade` を検索してインストールします。
+3. `https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/pluginmaster.json` をコピーします。
+4. 利用可能な repository 入力欄に貼り付けます。
+5. `+` を押して一覧に追加します。
+6. `Save and Close` を押します。
+7. `Backstab The Trade` を検索してインストールします。
 
 ### License
 
