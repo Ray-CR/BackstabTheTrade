@@ -23,9 +23,9 @@
     "Punchline": "Free your mouse and fingers from repetitive trading.",
     "AcceptsFeedback": true,
     "IconUrl": "https://raw.githubusercontent.com/Ray-CR/BackstabTheTrade/main/images/icon.png",
-    "DownloadLinkInstall": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta/BackstabTheTrade_beta.zip",
-    "DownloadLinkUpdate": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta/BackstabTheTrade_beta.zip",
-    "DownloadLinkTesting": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta/BackstabTheTrade_beta.zip",
+    "DownloadLinkInstall": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta1.1/BackstabTheTrade_beta.zip",
+    "DownloadLinkUpdate": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta1.1/BackstabTheTrade_beta.zip",
+    "DownloadLinkTesting": "https://github.com/Ray-CR/BackstabTheTrade/releases/download/beta1.1/BackstabTheTrade_beta.zip",
     "IsTestingExclusive": false
   }
 ]
