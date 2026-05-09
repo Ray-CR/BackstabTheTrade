@@ -9,6 +9,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>BackstabTheTrade</AssemblyName>
     <RootNamespace>BackstabTheTrade</RootNamespace>
+    <Version>1.0.0.1</Version>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
     <!-- Suppress the version-conflict warnings ??they are harmless -->
     <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
 
