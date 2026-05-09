@@ -68,6 +68,9 @@ public class Configuration : IPluginConfiguration
     // Receiver helper: automatically click Trade and confirm Yes when receiving a trade.
     public bool ReceiverModeAutoConfirm { get; set; } = false;
 
+    // Main UI language.
+    public string UiLanguageCode { get; set; } = "en";
+
     public void Save()
     {
         BackstabTheTrade.PluginInterface.SavePluginConfig(this);

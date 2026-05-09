@@ -52,6 +52,10 @@ Receiver Mode can automatically press `Trade` and confirm `Yes` while you are re
 
 Time Settings let you adjust delays to better match your game client, network, or testing needs.
 
+## UI Language
+
+Press the corresponding button to choose your UI language.
+
 ### Installation
 
 1. Type `/xlsettings` in game.
@@ -98,6 +102,10 @@ Receiver Mode 會在你收交易時自動按下 `Trade`，並在確認視窗中�
 ### Time Settings
 
 Time Settings 可調整各種延遲時間，方便配合你的遊戲環境、網路或測試需求。
+
+## UI Language
+
+按下對應按鈕以選擇你的 UI 語言。
 
 ### Installation
 
@@ -146,6 +154,10 @@ Receiver Mode 会在你收交易时自动按下 `Trade`，并在确认窗口中�
 
 Time Settings 可调整各种延迟时间，方便配合你的游戏环境、网络或测试需求。
 
+## UI Language
+
+按下对应按钮以选择你的 UI 语言。
+
 ### Installation
 
 1. 在游戏内输入 `/xlsettings`。
@@ -192,6 +204,10 @@ Receiver Mode は、受け取り側のときに `Trade` と確認ウィンドウ
 ### Time Settings
 
 Time Settings では、ゲーム環境やネットワーク、テスト条件に合わせて待機時間を調整できます。
+
+## UI Language
+
+対応するボタンを押して UI 言語を選択してください。
 
 ### Installation
 

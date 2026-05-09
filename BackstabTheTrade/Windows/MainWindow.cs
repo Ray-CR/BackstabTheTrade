@@ -23,6 +23,7 @@ public sealed class MainWindow : Window, IDisposable
         ReceiverMode,
         TrackerWindows,
         TimeSettings,
+        UiLanguage,
     }
 
     private enum ManualSortColumn
@@ -30,6 +31,14 @@ public sealed class MainWindow : Window, IDisposable
         Name,
         Quantity,
         UnitPrice,
+    }
+
+    private enum UiLanguage
+    {
+        English,
+        TraditionalChinese,
+        SimplifiedChinese,
+        Japanese,
     }
 
     private readonly BackstabTheTrade _plugin;
@@ -128,13 +137,14 @@ public sealed class MainWindow : Window, IDisposable
 
     private void DrawSidebar()
     {
-        DrawSidebarButton(SidebarPage.Main, "Main");
-        DrawSidebarButton(SidebarPage.GilTrade, "Gil Trade Mode");
-        DrawSidebarButton(SidebarPage.ItemManual, "Item Manual Mode");
-        DrawSidebarButton(SidebarPage.GilToItem, "Gil to Item Mode");
-        DrawSidebarButton(SidebarPage.ReceiverMode, "Receiver Mode");
-        DrawSidebarButton(SidebarPage.TrackerWindows, "Tracker + Windows");
-        DrawSidebarButton(SidebarPage.TimeSettings, "Time Settings");
+        DrawSidebarButton(SidebarPage.Main, T("sidebar.main"));
+        DrawSidebarButton(SidebarPage.GilTrade, T("sidebar.gilTrade"));
+        DrawSidebarButton(SidebarPage.ItemManual, T("sidebar.itemManual"));
+        DrawSidebarButton(SidebarPage.GilToItem, T("sidebar.gilToItem"));
+        DrawSidebarButton(SidebarPage.ReceiverMode, T("sidebar.receiver"));
+        DrawSidebarButton(SidebarPage.TrackerWindows, T("sidebar.tracker"));
+        DrawSidebarButton(SidebarPage.TimeSettings, T("sidebar.time"));
+        DrawSidebarButton(SidebarPage.UiLanguage, T("sidebar.uiLanguage"));
     }
 
     private void DrawSidebarButton(SidebarPage page, string label)
@@ -159,7 +169,7 @@ public sealed class MainWindow : Window, IDisposable
                 break;
             case SidebarPage.GilTrade:
                 _mode = AutoTradeMode.Gil;
-                DrawTradePageHeader("Gil Trade Mode", running);
+                DrawTradePageHeader(T("sidebar.gilTrade"), running);
                 DrawGilMode();
                 ImGui.Spacing();
                 DrawAutoStartControls();
@@ -169,13 +179,13 @@ public sealed class MainWindow : Window, IDisposable
                 break;
             case SidebarPage.ItemManual:
                 _mode = AutoTradeMode.ItemManual;
-                DrawTradePageHeader("Item Manual Mode", running);
+                DrawTradePageHeader(T("sidebar.itemManual"), running);
                 DrawManualItemMode();
                 DrawRunningStatus();
                 break;
             case SidebarPage.GilToItem:
                 _mode = AutoTradeMode.GilToItem;
-                DrawTradePageHeader("Gil to Item Mode", running);
+                DrawTradePageHeader(T("sidebar.gilToItem"), running);
                 DrawGilToItemMode();
                 DrawRunningStatus();
                 break;
@@ -190,36 +200,39 @@ public sealed class MainWindow : Window, IDisposable
             case SidebarPage.TimeSettings:
                 DrawTimeSettingsPage();
                 break;
+            case SidebarPage.UiLanguage:
+                DrawUiLanguagePage();
+                break;
         }
     }
 
     private void DrawMainPage()
     {
         var snapshot = _plugin.InventoryWealth.GetSnapshot();
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Main");
-        ImGui.TextDisabled("Inventory Items are shown here directly, including your gil summary.");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("main.title"));
+        ImGui.TextDisabled(T("main.desc"));
         ImGui.Separator();
 
-        ImGui.TextColored(new Vector4(0.95f, 0.85f, 0.3f, 1f), $"Player Gil: {snapshot.PlayerGil:N0}");
-        ImGui.TextColored(new Vector4(0.6f, 0.9f, 1f, 1f), $"Item Value: {snapshot.TotalItemValue:N0}");
-        ImGui.TextColored(new Vector4(0.5f, 1f, 0.5f, 1f), $"Total Wealth: {snapshot.TotalWealth:N0}");
+        ImGui.TextColored(new Vector4(0.95f, 0.85f, 0.3f, 1f), $"{T("main.playerGil")}: {snapshot.PlayerGil:N0}");
+        ImGui.TextColored(new Vector4(0.6f, 0.9f, 1f, 1f), $"{T("main.itemValue")}: {snapshot.TotalItemValue:N0}");
+        ImGui.TextColored(new Vector4(0.5f, 1f, 0.5f, 1f), $"{T("main.totalWealth")}: {snapshot.TotalWealth:N0}");
         ImGui.Spacing();
 
-        if (ImGui.Button("Refresh Inventory Items", new Vector2(-1, 24)))
+        if (ImGui.Button(T("main.refresh"), new Vector2(-1, 24)))
             _plugin.InventoryWealth.Invalidate();
 
         ImGui.Spacing();
         ImGui.BeginChild("main_inventory_items", new Vector2(-1, -1), true);
         if (snapshot.Entries.Count == 0)
         {
-            ImGui.TextDisabled("No tradeable inventory items found.");
+            ImGui.TextDisabled(T("main.noItems"));
         }
         else if (ImGui.BeginTable("main_inventory_table", 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY))
         {
-            ImGui.TableSetupColumn("Item", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Have", ImGuiTableColumnFlags.WidthFixed, 82);
-            ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthFixed, 88);
-            ImGui.TableSetupColumn("Stacks", ImGuiTableColumnFlags.WidthFixed, 64);
+            ImGui.TableSetupColumn(T("table.item"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(T("table.have"), ImGuiTableColumnFlags.WidthFixed, 82);
+            ImGui.TableSetupColumn(T("table.value"), ImGuiTableColumnFlags.WidthFixed, 88);
+            ImGui.TableSetupColumn(T("table.stacks"), ImGuiTableColumnFlags.WidthFixed, 64);
             ImGui.TableHeadersRow();
 
             var clipper = new ImGuiListClipper();
@@ -250,7 +263,7 @@ public sealed class MainWindow : Window, IDisposable
     private void DrawTradePageHeader(string title, bool running)
     {
         ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), title);
-        ImGui.Text("Target Player Name:");
+        ImGui.Text(T("shared.targetPlayer"));
         ImGui.SetNextItemWidth(-1);
         ImGui.BeginDisabled(running);
         ImGui.InputText("##target_trade_page", ref _targetName, 64);
@@ -258,7 +271,7 @@ public sealed class MainWindow : Window, IDisposable
         if (!string.IsNullOrWhiteSpace(_recentTargetName))
         {
             ImGui.BeginDisabled(running);
-            if (ImGui.SmallButton($"Use recent target: {_recentTargetName}"))
+            if (ImGui.SmallButton($"{T("shared.useRecentTarget")}: {_recentTargetName}"))
                 _targetName = _recentTargetName;
             ImGui.EndDisabled();
         }
@@ -269,65 +282,77 @@ public sealed class MainWindow : Window, IDisposable
     private void DrawReceiverPage(bool running, bool hasBuiltSendPlan)
     {
         var cfg = _plugin.Configuration;
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Receiver Mode");
-        ImGui.TextWrapped("Automatically press Trade and confirm Yes while you are receiving a trade.");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("sidebar.receiver"));
+        ImGui.TextWrapped(T("receiver.desc"));
         ImGui.Separator();
 
         bool receiverMode = cfg.ReceiverModeAutoConfirm;
         ImGui.BeginDisabled(running || hasBuiltSendPlan);
-        if (ImGui.Checkbox("Receiver mode", ref receiverMode))
+        if (ImGui.Checkbox(T("receiver.checkbox"), ref receiverMode))
         {
             cfg.ReceiverModeAutoConfirm = receiverMode;
             cfg.Save();
         }
         ImGui.EndDisabled();
 
-        if (ImGui.Button("Enable receiver mode", new Vector2(190, 0)))
+        if (ImGui.Button(T("receiver.enable"), new Vector2(190, 0)))
         {
             EnableReceiverMode();
         }
 
         ImGui.SameLine();
-        if (ImGui.Button("Disable receiver mode", new Vector2(190, 0)))
+        if (ImGui.Button(T("receiver.disable"), new Vector2(190, 0)))
         {
             DisableReceiverMode();
         }
 
         ImGui.Spacing();
         if (hasBuiltSendPlan)
-            ImGui.TextColored(new Vector4(1f, 0.55f, 0.35f, 1f), "Receive mode is locked because a send trade plan exists.");
+            ImGui.TextColored(new Vector4(1f, 0.55f, 0.35f, 1f), T("receiver.lockedByPlan"));
         if (running)
-            ImGui.TextColored(new Vector4(1f, 0.55f, 0.35f, 1f), "Receive mode cannot be changed while trading is running.");
+            ImGui.TextColored(new Vector4(1f, 0.55f, 0.35f, 1f), T("receiver.lockedByRunning"));
 
-        ImGui.TextWrapped("Enable receiver mode clears the current send plan and turns receiver mode on.");
+        ImGui.TextWrapped(T("receiver.note"));
     }
 
     private void DrawTrackerWindowsPage()
     {
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Tracker + Windows");
-        ImGui.TextWrapped("Open the helper windows from here.");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("sidebar.tracker"));
+        ImGui.TextWrapped(T("tracker.desc"));
         ImGui.Separator();
 
         float trackerButtonGap = 8f;
         float trackerButtonWidth = (ImGui.GetContentRegionAvail().X - trackerButtonGap) * 0.5f;
 
-        if (ImGui.Button("Open Track Log", new Vector2(trackerButtonWidth, 26)))
+        if (ImGui.Button(T("tracker.openLog"), new Vector2(trackerButtonWidth, 26)))
             _openTracker();
         ImGui.SameLine(0f, trackerButtonGap);
-        if (ImGui.Button("Open Trade History Window", new Vector2(trackerButtonWidth, 26)))
+        if (ImGui.Button(T("tracker.openHistory"), new Vector2(trackerButtonWidth, 26)))
             _openTradeHistory();
 
         ImGui.Spacing();
-        ImGui.TextWrapped("Track Log opens the diagnostic tracker. Trade History Window opens the trade history page.");
+        ImGui.TextWrapped(T("tracker.note"));
     }
 
     private void DrawTimeSettingsPage()
     {
         var cfg = _plugin.Configuration;
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Time Settings");
-        ImGui.TextDisabled("Time settings are independent from the trade mode pages.");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("time.title"));
+        ImGui.TextDisabled(T("time.desc"));
         ImGui.Separator();
         DrawTimingControls(cfg);
+    }
+
+    private void DrawUiLanguagePage()
+    {
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("ui.title"));
+        ImGui.TextDisabled(T("ui.desc"));
+        ImGui.Separator();
+
+        DrawLanguageButton(UiLanguage.English, "English");
+        DrawLanguageButton(UiLanguage.TraditionalChinese, "\u7E41\u9AD4\u4E2D\u6587");
+        DrawLanguageButton(UiLanguage.SimplifiedChinese, "\u7C21\u9AD4\u4E2D\u6587");
+        DrawLanguageButton(UiLanguage.Japanese, "\u65E5\u6587");
     }
 
     private void DrawTimingControls(Configuration cfg)
@@ -411,9 +436,9 @@ public sealed class MainWindow : Window, IDisposable
         var gilTradePlan = BuildGilTradePlan(_totalGil);
 
         ImGui.BeginDisabled(_tm.IsRunning);
-        ImGui.TextColored(new Vector4(0.95f, 0.85f, 0.3f, 1f), $"Player Gil: {playerGil:N0}");
+        ImGui.TextColored(new Vector4(0.95f, 0.85f, 0.3f, 1f), $"{T("main.playerGil")}: {playerGil:N0}");
         ImGui.Spacing();
-        ImGui.Text("Total Gil Trade:");
+        ImGui.Text(T("gil.totalGilTrade"));
         ImGui.SetNextItemWidth(-1);
         if (ImGui.InputText("##totalGil", ref _totalGilText, 16))
         {
@@ -428,7 +453,7 @@ public sealed class MainWindow : Window, IDisposable
                 {
                     _totalGil = 0;
                     _totalGilText = string.Empty;
-                    _gilModeValidationMessage = "Not enough gil.";
+                    _gilModeValidationMessage = T("validation.notEnoughGil");
                 }
                 else
                 {
@@ -459,33 +484,33 @@ public sealed class MainWindow : Window, IDisposable
         DrawAutoStartControls();
         ImGui.Spacing();
         ImGui.BeginDisabled(_tm.IsRunning);
-        ImGui.Text("Manual Item Selection:");
-        ImGui.TextWrapped("1. Select and enter the quantity you want to trade. The plugin plans from items that already exist in your inventory.");
-        ImGui.TextWrapped("2. Press the build item manual plan, confirm the target player.");
-        ImGui.TextWrapped("3. Press auto start, then plugin will trade all item selected by the plan automatically.");
+        ImGui.Text(T("manual.title"));
+        ImGui.TextWrapped(T("manual.step1"));
+        ImGui.TextWrapped(T("manual.step2"));
+        ImGui.TextWrapped(T("manual.step3"));
 
         ImGui.SetNextItemWidth(-1);
-        ImGui.InputTextWithHint("##manualItemFilter", "Filter item name...", ref _manualItemFilter, 64);
-        ImGui.Checkbox("Show selected only", ref _manualShowSelectedOnly);
+        ImGui.InputTextWithHint("##manualItemFilter", T("manual.filterHint"), ref _manualItemFilter, 64);
+        ImGui.Checkbox(T("manual.showSelectedOnly"), ref _manualShowSelectedOnly);
         ImGui.SameLine();
-        if (ImGui.SmallButton("Clear Qty"))
+        if (ImGui.SmallButton(T("manual.clearQty")))
         {
             _manualItemQuantities.Clear();
             _manualSelectionVersion++;
             _itemTradePlan = InventoryTradePlan.Empty;
         }
         ImGui.SameLine();
-        if (ImGui.SmallButton("Refresh"))
+        if (ImGui.SmallButton(T("manual.refresh")))
         {
             _plugin.InventoryWealth.Invalidate();
             _itemTradePlan = _plugin.InventoryWealth.BuildTradePlanFromSelections(_manualItemQuantities);
             DisableReceiverModeForSendPlan();
         }
         ImGui.SameLine();
-        if (ImGui.SmallButton("Open Inventory Items"))
+        if (ImGui.SmallButton(T("manual.openInventory")))
             _openInventoryWealth();
         ImGui.SameLine();
-        if (ImGui.SmallButton("Select all salvaged item"))
+        if (ImGui.SmallButton(T("manual.selectAllSalvaged")))
         {
             foreach (var entry in snapshot.Entries)
             {
@@ -503,13 +528,13 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.BeginChild("manualItemSelection", new Vector2(-1, 260), true);
         if (ImGui.BeginTable("manualItemSelectionTable", 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY))
         {
-            ImGui.TableSetupColumn("All", ImGuiTableColumnFlags.WidthFixed, 42);
-            ImGui.TableSetupColumn("Qty", ImGuiTableColumnFlags.WidthFixed, 82);
-            ImGui.TableSetupColumn("Item", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Quality", ImGuiTableColumnFlags.WidthFixed, 62);
-            ImGui.TableSetupColumn("Have", ImGuiTableColumnFlags.WidthFixed, 68);
-            ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthFixed, 78);
-            ImGui.TableSetupColumn("Stacks", ImGuiTableColumnFlags.WidthFixed, 62);
+            ImGui.TableSetupColumn(T("manual.all"), ImGuiTableColumnFlags.WidthFixed, 42);
+            ImGui.TableSetupColumn(T("manual.qty"), ImGuiTableColumnFlags.WidthFixed, 82);
+            ImGui.TableSetupColumn(T("table.item"), ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn(T("manual.quality"), ImGuiTableColumnFlags.WidthFixed, 62);
+            ImGui.TableSetupColumn(T("table.have"), ImGuiTableColumnFlags.WidthFixed, 68);
+            ImGui.TableSetupColumn(T("table.value"), ImGuiTableColumnFlags.WidthFixed, 78);
+            ImGui.TableSetupColumn(T("table.stacks"), ImGuiTableColumnFlags.WidthFixed, 62);
 
             ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
 
@@ -529,25 +554,25 @@ public sealed class MainWindow : Window, IDisposable
                 _manualSelectionVersion++;
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Trade all currently visible items");
+                ImGui.SetTooltip(T("manual.visibleTooltip"));
 
             ImGui.TableSetColumnIndex(1);
-            ImGui.TableHeader("Qty");
+            ImGui.TableHeader(T("manual.qty"));
 
             ImGui.TableSetColumnIndex(2);
-            DrawManualSortHeader("Item", ManualSortColumn.Name);
+            DrawManualSortHeader(T("table.item"), ManualSortColumn.Name);
 
             ImGui.TableSetColumnIndex(3);
-            ImGui.TableHeader("Quality");
+            ImGui.TableHeader(T("manual.quality"));
 
             ImGui.TableSetColumnIndex(4);
-            DrawManualSortHeader("Have", ManualSortColumn.Quantity);
+            DrawManualSortHeader(T("table.have"), ManualSortColumn.Quantity);
 
             ImGui.TableSetColumnIndex(5);
-            DrawManualSortHeader("Value", ManualSortColumn.UnitPrice);
+            DrawManualSortHeader(T("table.value"), ManualSortColumn.UnitPrice);
 
             ImGui.TableSetColumnIndex(6);
-            ImGui.TableHeader("Stacks");
+            ImGui.TableHeader(T("table.stacks"));
 
             var clipper = new ImGuiListClipper();
             clipper.Begin(visibleEntries.Count);
@@ -617,7 +642,7 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.EndChild();
 
         float manualButtonWidth = (ImGui.GetContentRegionAvail().X - inlineButtonGap) * 0.5f;
-        if (ImGui.Button("Build Manual Item Plan", new Vector2(manualButtonWidth, 24)))
+        if (ImGui.Button(T("manual.buildPlan"), new Vector2(manualButtonWidth, 24)))
         {
             _itemTradePlan = _plugin.InventoryWealth.BuildTradePlanFromSelections(_manualItemQuantities);
             _showSafetyPreview = false;
@@ -625,7 +650,7 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         ImGui.SameLine(0f, inlineButtonGap);
-        if (ImGui.Button("Clear Trade Plan", new Vector2(manualButtonWidth, 24)))
+        if (ImGui.Button(T("shared.clearTradePlan"), new Vector2(manualButtonWidth, 24)))
         {
             _itemTradePlan = InventoryTradePlan.Empty;
             _showSafetyPreview = false;
@@ -642,25 +667,25 @@ public sealed class MainWindow : Window, IDisposable
         DrawAutoStartControls();
         ImGui.Spacing();
         ImGui.BeginDisabled(_tm.IsRunning);
-        ImGui.TextColored(new Vector4(0.6f, 0.9f, 1f, 1f), $"Inventory Item Value: {snapshot.TotalItemValue:N0}");
+        ImGui.TextColored(new Vector4(0.6f, 0.9f, 1f, 1f), $"{T("gilToItem.inventoryItemValue")}: {snapshot.TotalItemValue:N0}");
         ImGui.Spacing();
-        ImGui.Text("Gil to Item Trade");
-        ImGui.TextWrapped("1. Enter the amount of gil");
-        ImGui.TextWrapped("2. Select and press gil to item trade plan button");
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "- Build item trade plan: build a trade plan using inventory items with a similar total value.");
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "- Build salvaged item plan: build a trade plan using salvaged item only with a similar total value.");
-        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "- Trade all salvaged item: build a trade plan to trade all the salvaged item.");
-        ImGui.TextWrapped("3. Press auto start, then plugin will trade all item selected by the plan automatically.");
+        ImGui.Text(T("gilToItem.title"));
+        ImGui.TextWrapped(T("gilToItem.step1"));
+        ImGui.TextWrapped(T("gilToItem.step2"));
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("gilToItem.line1"));
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("gilToItem.line2"));
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("gilToItem.line3"));
+        ImGui.TextWrapped(T("gilToItem.step3"));
         ImGui.SetNextItemWidth(-1);
         ImGui.InputText("##itemTargetValue", ref _itemTargetValueText, 24);
 
         if (_pendingPlanTask is { IsCompleted: false })
-            ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Computing plan...");
+            ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), T("gilToItem.computing"));
         ImGui.BeginDisabled(_pendingPlanTask is { IsCompleted: false });
 
         float fourButtonWidth = (ImGui.GetContentRegionAvail().X - (inlineButtonGap * 3f)) * 0.25f;
 
-        if (ImGui.Button("Build Item Trade Plan", new Vector2(fourButtonWidth, 24)))
+        if (ImGui.Button(T("gilToItem.buildPlan"), new Vector2(fourButtonWidth, 24)))
         {
             if (long.TryParse(_itemTargetValueText, out var targetValue) && targetValue > 0)
                 StartPlanTask(() => _plugin.InventoryWealth.BuildTradePlan(targetValue));
@@ -672,7 +697,7 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         ImGui.SameLine(0f, inlineButtonGap);
-        if (ImGui.Button("Build Salvaged Item Plan", new Vector2(fourButtonWidth, 24)))
+        if (ImGui.Button(T("gilToItem.buildSalvaged"), new Vector2(fourButtonWidth, 24)))
         {
             if (long.TryParse(_itemTargetValueText, out var targetValue) && targetValue > 0)
                 StartPlanTask(() => _plugin.InventoryWealth.BuildSalvagedTradePlan(targetValue));
@@ -684,13 +709,13 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         ImGui.SameLine(0f, inlineButtonGap);
-        if (ImGui.Button("Trade All Salvaged Items", new Vector2(fourButtonWidth, 24)))
+        if (ImGui.Button(T("gilToItem.tradeAllSalvaged"), new Vector2(fourButtonWidth, 24)))
         {
             StartPlanTask(() => _plugin.InventoryWealth.BuildAllSalvagedTradePlan());
         }
 
         ImGui.SameLine(0f, inlineButtonGap);
-        if (ImGui.Button("Clear Trade Plan", new Vector2(fourButtonWidth, 24)))
+        if (ImGui.Button(T("shared.clearTradePlan"), new Vector2(fourButtonWidth, 24)))
         {
             _itemTradePlan = InventoryTradePlan.Empty;
             _showSafetyPreview = false;
@@ -698,7 +723,7 @@ public sealed class MainWindow : Window, IDisposable
 
         ImGui.EndDisabled();
 
-        ImGui.TextWrapped("Salvaged-only includes Necklace, Earring, Bracelet, Ring, and Extravagant versions.");
+        ImGui.TextWrapped(T("gilToItem.note"));
 
         DrawTradePlanSummary(_itemTradePlan);
         ImGui.EndDisabled();
@@ -1082,6 +1107,311 @@ public sealed class MainWindow : Window, IDisposable
                 : $"{group.Key:N0} x{group.Count()}");
 
         return $"= {plan.Count} trade(s): {string.Join(" + ", grouped)} = {total:N0} gil";
+    }
+
+    private UiLanguage GetUiLanguage()
+    {
+        return (_plugin.Configuration.UiLanguageCode ?? "en").ToLowerInvariant() switch
+        {
+            "zh-hant" => UiLanguage.TraditionalChinese,
+            "zh-hans" => UiLanguage.SimplifiedChinese,
+            "ja" => UiLanguage.Japanese,
+            _ => UiLanguage.English,
+        };
+    }
+
+    private void SetUiLanguage(UiLanguage language)
+    {
+        _plugin.Configuration.UiLanguageCode = language switch
+        {
+            UiLanguage.TraditionalChinese => "zh-hant",
+            UiLanguage.SimplifiedChinese => "zh-hans",
+            UiLanguage.Japanese => "ja",
+            _ => "en",
+        };
+        _plugin.Configuration.Save();
+    }
+
+    private void DrawLanguageButton(UiLanguage language, string label)
+    {
+        bool selected = GetUiLanguage() == language;
+        if (selected)
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.28f, 0.28f, 0.32f, 1f));
+
+        if (ImGui.Button(label, new Vector2(-1, 28)))
+            SetUiLanguage(language);
+
+        if (selected)
+            ImGui.PopStyleColor();
+    }
+
+    private string T(string key)
+    {
+        return GetUiLanguage() switch
+        {
+            UiLanguage.TraditionalChinese => GetTraditionalChineseText(key),
+            UiLanguage.SimplifiedChinese => GetSimplifiedChineseText(key),
+            UiLanguage.Japanese => GetJapaneseText(key),
+            _ => GetEnglishText(key),
+        };
+    }
+
+    private static string GetEnglishText(string key)
+    {
+        return key switch
+        {
+            "sidebar.main" => "Main",
+            "sidebar.gilTrade" => "Gil Trade Mode",
+            "sidebar.itemManual" => "Item Manual Mode",
+            "sidebar.gilToItem" => "Gil to Item Mode",
+            "sidebar.receiver" => "Receiver Mode",
+            "sidebar.tracker" => "Tracker + Windows",
+            "sidebar.time" => "Time Settings",
+            "sidebar.uiLanguage" => "UI Language",
+            "time.title" => "Time Settings",
+            "time.desc" => "Time settings are independent from the trade mode pages.",
+            "ui.title" => "UI Language",
+            "ui.desc" => "Choose the language used by the main plugin UI.",
+            "main.title" => "Main",
+            "main.desc" => "Inventory Items are shown here directly, including your gil summary.",
+            "main.refresh" => "Refresh Inventory Items",
+            "main.noItems" => "No tradeable inventory items found.",
+            "main.playerGil" => "Player Gil",
+            "main.itemValue" => "Item Value",
+            "main.totalWealth" => "Total Wealth",
+            "table.item" => "Item",
+            "table.have" => "Have",
+            "table.value" => "Value",
+            "table.stacks" => "Stacks",
+            "shared.targetPlayer" => "Target Player Name:",
+            "shared.useRecentTarget" => "Use recent target",
+            "receiver.title" => "Receiver Mode",
+            "receiver.desc" => "Automatically press Trade and confirm Yes while you are receiving a trade.",
+            "receiver.checkbox" => "Receiver mode",
+            "receiver.enable" => "Enable receiver mode",
+            "receiver.disable" => "Disable receiver mode",
+            "receiver.lockedByPlan" => "Receive mode is locked because a send trade plan exists.",
+            "receiver.lockedByRunning" => "Receive mode cannot be changed while trading is running.",
+            "receiver.note" => "Enable receiver mode clears the current send plan and turns receiver mode on.",
+            "tracker.title" => "Tracker + Windows",
+            "tracker.desc" => "Open the helper windows from here.",
+            "tracker.openLog" => "Open Track Log",
+            "tracker.openHistory" => "Open Trade History Window",
+            "tracker.note" => "Track Log opens the diagnostic tracker. Trade History Window opens the trade history page.",
+            "gil.totalGilTrade" => "Total Gil Trade:",
+            "manual.title" => "Manual Item Selection:",
+            "manual.step1" => "1. Select and enter the quantity you want to trade. The plugin plans from items that already exist in your inventory.",
+            "manual.step2" => "2. Press the build item manual plan, confirm the target player.",
+            "manual.step3" => "3. Press auto start, then plugin will trade all item selected by the plan automatically.",
+            "manual.filterHint" => "Filter item name...",
+            "manual.showSelectedOnly" => "Show selected only",
+            "manual.clearQty" => "Clear Qty",
+            "manual.refresh" => "Refresh",
+            "manual.openInventory" => "Open Inventory Items",
+            "manual.selectAllSalvaged" => "Select all salvaged item",
+            "manual.all" => "All",
+            "manual.qty" => "Qty",
+            "manual.quality" => "Quality",
+            "manual.visibleTooltip" => "Trade all currently visible items",
+            "manual.buildPlan" => "Build Manual Item Plan",
+            "shared.clearTradePlan" => "Clear Trade Plan",
+            "gilToItem.inventoryItemValue" => "Inventory Item Value",
+            "gilToItem.title" => "Gil to Item Mode",
+            "gilToItem.step1" => "1. Enter the amount of gil",
+            "gilToItem.step2" => "2. Select and press gil to item trade plan button",
+            "gilToItem.step3" => "3. Press auto start, then plugin will trade all item selected by the plan automatically.",
+            "gilToItem.line1" => "- Build item trade plan: build a trade plan using inventory items with a similar total value.",
+            "gilToItem.line2" => "- Build salvaged item plan: build a trade plan using salvaged item only with a similar total value.",
+            "gilToItem.line3" => "- Trade all salvaged item: build a trade plan to trade all the salvaged item.",
+            "gilToItem.computing" => "Computing plan...",
+            "gilToItem.buildPlan" => "Build Item Trade Plan",
+            "gilToItem.buildSalvaged" => "Build Salvaged Item Plan",
+            "gilToItem.tradeAllSalvaged" => "Trade All Salvaged Items",
+            "gilToItem.note" => "Salvaged-only includes Necklace, Earring, Bracelet, Ring, and Extravagant versions.",
+            _ => key,
+        };
+    }
+
+    private static string GetTraditionalChineseText(string key)
+    {
+        return key switch
+        {
+            "sidebar.main" => "\u4E3B\u9801",
+            "sidebar.uiLanguage" => "UI Language",
+            "time.title" => "Time Settings",
+            "time.desc" => "\u9019\u4E9B\u6642\u9593\u8A2D\u5B9A\u8207\u5404\u4EA4\u6613\u9801\u9762\u7368\u7ACB\u3002",
+            "ui.title" => "UI Language",
+            "ui.desc" => "\u9078\u64C7\u4E3B UI \u8981\u4F7F\u7528\u7684\u8A9E\u8A00\u3002",
+            "main.title" => "\u4E3B\u9801",
+            "main.desc" => "\u9019\u88E1\u6703\u76F4\u63A5\u986F\u793A\u80CC\u5305\u7269\u54C1\u8207 gil \u7E3D\u89BD\u3002",
+            "main.refresh" => "\u91CD\u65B0\u6574\u7406\u80CC\u5305\u7269\u54C1",
+            "main.noItems" => "\u627E\u4E0D\u5230\u53EF\u4EA4\u6613\u7684\u80CC\u5305\u7269\u54C1\u3002",
+            "main.playerGil" => "\u73A9\u5BB6 Gil",
+            "main.itemValue" => "\u7269\u54C1\u50F9\u503C",
+            "main.totalWealth" => "\u7E3D\u8CC7\u7522",
+            "table.item" => "\u7269\u54C1",
+            "table.have" => "\u6301\u6709",
+            "table.value" => "\u50F9\u503C",
+            "table.stacks" => "\u7D44\u6578",
+            "shared.targetPlayer" => "\u76EE\u6A19\u73A9\u5BB6\u540D\u7A31:",
+            "shared.useRecentTarget" => "\u4F7F\u7528\u6700\u8FD1\u76EE\u6A19",
+            "receiver.desc" => "\u7576\u4F60\u662F\u63A5\u6536\u65B9\u6642\uff0c\u81EA\u52D5\u6309 Trade \u4E26\u78BA\u8A8D Yes\u3002",
+            "receiver.enable" => "\u555F\u7528 receiver mode",
+            "receiver.disable" => "\u505C\u7528 receiver mode",
+            "receiver.lockedByPlan" => "\u56E0\u70BA\u5DF2\u6709\u767C\u9001\u4EA4\u6613\u8A08\u5283\uff0Creceiver mode \u5DF2\u88AB\u9396\u5B9A\u3002",
+            "receiver.lockedByRunning" => "\u4EA4\u6613\u9032\u884C\u4E2D\u7121\u6CD5\u5207\u63DB receiver mode\u3002",
+            "receiver.note" => "\u555F\u7528 receiver mode \u6703\u6E05\u7A7A\u76EE\u524D\u767C\u9001\u8A08\u5283\uff0C\u4E26\u958B\u555F receiver mode\u3002",
+            "tracker.desc" => "\u53EF\u4EE5\u5F9E\u9019\u88E1\u6253\u958B\u8F14\u52A9\u8996\u7A97\u3002",
+            "tracker.openLog" => "\u6253\u958B Track Log",
+            "tracker.openHistory" => "\u6253\u958B Trade History Window",
+            "tracker.note" => "Track Log \u6703\u6253\u958B tracker\u3002Trade History Window \u6703\u6253\u958B\u4EA4\u6613\u8A18\u9304\u3002",
+            "gil.totalGilTrade" => "\u7E3D Gil \u4EA4\u6613\u91D1\u984D:",
+            "manual.title" => "Manual Item Selection:",
+            "manual.step1" => "1. \u9078\u64C7\u4E26\u8F38\u5165\u60F3\u4EA4\u6613\u7684\u6578\u91CF\u3002\u63D2\u4EF6\u6703\u6839\u64DA\u80CC\u5305\u73FE\u6709\u7269\u54C1\u898F\u5283\u3002",
+            "manual.step2" => "2. \u6309 build item manual plan\uff0C\u78BA\u8A8D\u76EE\u6A19\u73A9\u5BB6\u3002",
+            "manual.step3" => "3. \u6309 auto start \u5F8C\uff0C\u63D2\u4EF6\u6703\u81EA\u52D5\u4EA4\u6613\u8A08\u5283\u5167\u7684\u6240\u6709\u7269\u54C1\u3002",
+            "manual.filterHint" => "\u7BE9\u9078\u7269\u54C1\u540D\u7A31...",
+            "manual.showSelectedOnly" => "\u53EA\u986F\u793A\u5DF2\u9078\u64C7",
+            "manual.clearQty" => "\u6E05\u9664\u6578\u91CF",
+            "manual.refresh" => "\u91CD\u65B0\u6574\u7406",
+            "manual.openInventory" => "\u6253\u958B Inventory Items",
+            "manual.selectAllSalvaged" => "\u5168\u9078 salvaged item",
+            "manual.all" => "\u5168\u9078",
+            "manual.qty" => "\u6578\u91CF",
+            "manual.quality" => "\u54C1\u8CEA",
+            "manual.visibleTooltip" => "\u4EA4\u6613\u76EE\u524D\u986F\u793A\u7684\u6240\u6709\u7269\u54C1",
+            "manual.buildPlan" => "Build Manual Item Plan",
+            "shared.clearTradePlan" => "\u6E05\u9664\u4EA4\u6613\u8A08\u5283",
+            "gilToItem.inventoryItemValue" => "\u80CC\u5305\u7269\u54C1\u50F9\u503C",
+            "gilToItem.title" => "Gil to Item Mode",
+            "gilToItem.step1" => "1. \u8F38\u5165 gil \u91D1\u984D",
+            "gilToItem.step2" => "2. \u9078\u64C7\u4E26\u6309 gil to item trade plan \u6309\u9215",
+            "gilToItem.step3" => "3. \u6309 auto start \u5F8C\uff0C\u63D2\u4EF6\u6703\u81EA\u52D5\u4EA4\u6613\u8A08\u5283\u5167\u7684\u6240\u6709\u7269\u54C1\u3002",
+            "gilToItem.line1" => "- Build item trade plan: \u4F7F\u7528\u80CC\u5305\u4E2D\u63A5\u8FD1\u76F8\u540C\u7E3D\u50F9\u503C\u7684\u7269\u54C1\u5EFA\u7ACB\u4EA4\u6613\u8A08\u5283\u3002",
+            "gilToItem.line2" => "- Build salvaged item plan: \u53EA\u4F7F\u7528 salvaged item \u5EFA\u7ACB\u63A5\u8FD1\u76F8\u540C\u7E3D\u50F9\u503C\u7684\u4EA4\u6613\u8A08\u5283\u3002",
+            "gilToItem.line3" => "- Trade all salvaged item: \u5EFA\u7ACB\u628A\u6240\u6709 salvaged item \u5168\u90E8\u4EA4\u6613\u7684\u8A08\u5283\u3002",
+            "gilToItem.computing" => "\u6B63\u5728\u8A08\u7B97\u8A08\u5283...",
+            "gilToItem.buildPlan" => "Build Item Trade Plan",
+            "gilToItem.buildSalvaged" => "Build Salvaged Item Plan",
+            "gilToItem.tradeAllSalvaged" => "Trade All Salvaged Items",
+            "gilToItem.note" => "salvaged-only \u5305\u62EC Necklace\u3001Earring\u3001Bracelet\u3001Ring \u548C Extravagant \u7248\u672C\u3002",
+            _ => GetEnglishText(key),
+        };
+    }
+
+    private static string GetSimplifiedChineseText(string key)
+    {
+        return key switch
+        {
+            "ui.desc" => "\u9009\u62E9\u4E3B UI \u8981\u4F7F\u7528\u7684\u8BED\u8A00\u3002",
+            "main.title" => "\u4E3B\u9875",
+            "main.desc" => "\u8FD9\u91CC\u4F1A\u76F4\u63A5\u663E\u793A\u80CC\u5305\u7269\u54C1\u548C gil \u603B\u89C8\u3002",
+            "main.refresh" => "\u5237\u65B0\u80CC\u5305\u7269\u54C1",
+            "main.noItems" => "\u627E\u4E0D\u5230\u53EF\u4EA4\u6613\u7684\u80CC\u5305\u7269\u54C1\u3002",
+            "main.playerGil" => "\u73A9\u5BB6 Gil",
+            "main.itemValue" => "\u7269\u54C1\u4EF7\u503C",
+            "main.totalWealth" => "\u603B\u8D44\u4EA7",
+            "table.item" => "\u7269\u54C1",
+            "table.have" => "\u6301\u6709",
+            "table.value" => "\u4EF7\u503C",
+            "table.stacks" => "\u5806\u53E0",
+            "shared.targetPlayer" => "\u76EE\u6807\u73A9\u5BB6\u540D\u79F0:",
+            "shared.useRecentTarget" => "\u4F7F\u7528\u6700\u8FD1\u76EE\u6807",
+            "receiver.desc" => "\u5F53\u4F60\u662F\u63A5\u6536\u65B9\u65F6\uff0C\u81EA\u52A8\u6309 Trade \u5E76\u786E\u8BA4 Yes\u3002",
+            "receiver.enable" => "\u542F\u7528 receiver mode",
+            "receiver.disable" => "\u505C\u7528 receiver mode",
+            "receiver.lockedByPlan" => "\u56E0\u4E3A\u5DF2\u6709\u53D1\u9001\u4EA4\u6613\u8BA1\u5212\uff0Creceiver mode \u5DF2\u88AB\u9501\u5B9A\u3002",
+            "receiver.lockedByRunning" => "\u4EA4\u6613\u8FDB\u884C\u4E2D\u65E0\u6CD5\u5207\u6362 receiver mode\u3002",
+            "receiver.note" => "\u542F\u7528 receiver mode \u4F1A\u6E05\u7A7A\u5F53\u524D\u53D1\u9001\u8BA1\u5212\uff0C\u5E76\u5F00\u542F receiver mode\u3002",
+            "tracker.desc" => "\u53EF\u4EE5\u5728\u8FD9\u91CC\u6253\u5F00\u8F85\u52A9\u7A97\u53E3\u3002",
+            "tracker.openLog" => "\u6253\u5F00 Track Log",
+            "tracker.openHistory" => "\u6253\u5F00 Trade History Window",
+            "tracker.note" => "Track Log \u4F1A\u6253\u5F00 tracker\u3002Trade History Window \u4F1A\u6253\u5F00\u4EA4\u6613\u8BB0\u5F55\u3002",
+            "time.desc" => "\u8FD9\u4E9B\u65F6\u95F4\u8BBE\u5B9A\u4E0E\u5404\u4EA4\u6613\u9875\u9762\u72EC\u7ACB\u3002",
+            "gil.totalGilTrade" => "\u603B Gil \u4EA4\u6613\u91D1\u989D:",
+            "manual.step1" => "1. \u9009\u62E9\u5E76\u8F93\u5165\u60F3\u4EA4\u6613\u7684\u6570\u91CF\u3002\u63D2\u4EF6\u4F1A\u6839\u636E\u80CC\u5305\u73B0\u6709\u7269\u54C1\u89C4\u5212\u3002",
+            "manual.step2" => "2. \u6309 build item manual plan\uff0C\u786E\u8BA4\u76EE\u6807\u73A9\u5BB6\u3002",
+            "manual.step3" => "3. \u6309 auto start \u540E\uff0C\u63D2\u4EF6\u4F1A\u81EA\u52A8\u4EA4\u6613\u8BA1\u5212\u5185\u7684\u6240\u6709\u7269\u54C1\u3002",
+            "manual.filterHint" => "\u7B5B\u9009\u7269\u54C1\u540D\u79F0...",
+            "manual.showSelectedOnly" => "\u53EA\u663E\u793A\u5DF2\u9009\u62E9",
+            "manual.clearQty" => "\u6E05\u9664\u6570\u91CF",
+            "manual.refresh" => "\u5237\u65B0",
+            "manual.openInventory" => "\u6253\u5F00 Inventory Items",
+            "manual.selectAllSalvaged" => "\u5168\u9009 salvaged item",
+            "manual.all" => "\u5168\u9009",
+            "manual.qty" => "\u6570\u91CF",
+            "manual.quality" => "\u54C1\u8D28",
+            "manual.visibleTooltip" => "\u4EA4\u6613\u5F53\u524D\u663E\u793A\u7684\u6240\u6709\u7269\u54C1",
+            "shared.clearTradePlan" => "\u6E05\u9664\u4EA4\u6613\u8BA1\u5212",
+            "gilToItem.inventoryItemValue" => "\u80CC\u5305\u7269\u54C1\u4EF7\u503C",
+            "gilToItem.step1" => "1. \u8F93\u5165 gil \u91D1\u989D",
+            "gilToItem.step2" => "2. \u9009\u62E9\u5E76\u6309 gil to item trade plan \u6309\u94AE",
+            "gilToItem.step3" => "3. \u6309 auto start \u540E\uff0C\u63D2\u4EF6\u4F1A\u81EA\u52A8\u4EA4\u6613\u8BA1\u5212\u5185\u7684\u6240\u6709\u7269\u54C1\u3002",
+            "gilToItem.line1" => "- Build item trade plan: \u4F7F\u7528\u80CC\u5305\u4E2D\u603B\u4EF7\u503C\u76F8\u8FD1\u7684\u7269\u54C1\u5EFA\u7ACB\u4EA4\u6613\u8BA1\u5212\u3002",
+            "gilToItem.line2" => "- Build salvaged item plan: \u53EA\u4F7F\u7528 salvaged item \u5EFA\u7ACB\u603B\u4EF7\u503C\u76F8\u8FD1\u7684\u4EA4\u6613\u8BA1\u5212\u3002",
+            "gilToItem.line3" => "- Trade all salvaged item: \u5EFA\u7ACB\u628A\u6240\u6709 salvaged item \u5168\u90E8\u4EA4\u6613\u7684\u8BA1\u5212\u3002",
+            "gilToItem.computing" => "\u6B63\u5728\u8BA1\u7B97\u8BA1\u5212...",
+            "gilToItem.note" => "salvaged-only \u5305\u62EC Necklace\u3001Earring\u3001Bracelet\u3001Ring \u548C Extravagant \u7248\u672C\u3002",
+            _ => GetTraditionalChineseText(key),
+        };
+    }
+
+    private static string GetJapaneseText(string key)
+    {
+        return key switch
+        {
+            "sidebar.main" => "\u30E1\u30A4\u30F3",
+            "ui.desc" => "\u30E1\u30A4\u30F3 UI \u3067\u4F7F\u3046\u8A00\u8A9E\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
+            "main.title" => "\u30E1\u30A4\u30F3",
+            "main.desc" => "\u3053\u3053\u3067\u306F\u6240\u6301\u54C1\u3068 gil \u306E\u7DCF\u89BD\u3092\u76F4\u63A5\u8868\u793A\u3057\u307E\u3059\u3002",
+            "main.refresh" => "\u6240\u6301\u54C1\u3092\u66F4\u65B0",
+            "main.noItems" => "\u4EA4\u6613\u53EF\u80FD\u306A\u6240\u6301\u54C1\u304C\u3042\u308A\u307E\u305B\u3093\u3002",
+            "main.playerGil" => "\u6240\u6301 Gil",
+            "main.itemValue" => "\u30A2\u30A4\u30C6\u30E0\u4FA1\u5024",
+            "main.totalWealth" => "\u7DCF\u8CC7\u7523",
+            "table.item" => "\u30A2\u30A4\u30C6\u30E0",
+            "table.have" => "\u6240\u6301",
+            "table.value" => "\u4FA1\u5024",
+            "table.stacks" => "\u30B9\u30BF\u30C3\u30AF",
+            "shared.targetPlayer" => "\u5BFE\u8C61\u30D7\u30EC\u30A4\u30E4\u30FC\u540D:",
+            "shared.useRecentTarget" => "\u76F4\u8FD1\u306E\u5BFE\u8C61\u3092\u4F7F\u3046",
+            "receiver.desc" => "\u53D7\u3051\u53D6\u308A\u5074\u306E\u3068\u304D\u306B Trade \u3068 Yes \u3092\u81EA\u52D5\u3067\u62BC\u3057\u307E\u3059\u3002",
+            "receiver.enable" => "receiver mode \u3092\u6709\u52B9\u5316",
+            "receiver.disable" => "receiver mode \u3092\u7121\u52B9\u5316",
+            "receiver.lockedByPlan" => "\u9001\u4FE1\u30D7\u30E9\u30F3\u304C\u3042\u308B\u305F\u3081 receiver mode \u306F\u30ED\u30C3\u30AF\u4E2D\u3067\u3059\u3002",
+            "receiver.lockedByRunning" => "\u4EA4\u6613\u4E2D\u306F receiver mode \u3092\u5909\u66F4\u3067\u304D\u307E\u305B\u3093\u3002",
+            "receiver.note" => "receiver mode \u3092\u6709\u52B9\u306B\u3059\u308B\u3068\u3001\u73FE\u5728\u306E\u9001\u4FE1\u30D7\u30E9\u30F3\u3092\u6D88\u53BB\u3057\u3066 ON \u306B\u3057\u307E\u3059\u3002",
+            "tracker.desc" => "\u3053\u3053\u304B\u3089\u88DC\u52A9\u30A6\u30A3\u30F3\u30C9\u30A6\u3092\u958B\u3051\u307E\u3059\u3002",
+            "tracker.openLog" => "Track Log \u3092\u958B\u304F",
+            "tracker.openHistory" => "Trade History Window \u3092\u958B\u304F",
+            "tracker.note" => "Track Log \u306F tracker \u3092\u958B\u304D\u307E\u3059\u3002Trade History Window \u306F\u4EA4\u6613\u5C65\u6B74\u3092\u958B\u304D\u307E\u3059\u3002",
+            "time.desc" => "\u3053\u308C\u3089\u306E\u6642\u9593\u8A2D\u5B9A\u306F\u5404\u4EA4\u6613\u30DA\u30FC\u30B8\u3068\u306F\u5225\u3067\u3059\u3002",
+            "gil.totalGilTrade" => "\u4EA4\u6613\u3059\u308B Gil \u5408\u8A08:",
+            "manual.step1" => "1. \u4EA4\u6613\u3057\u305F\u3044\u6570\u91CF\u3092\u9078\u629E\u3057\u3066\u5165\u529B\u3057\u307E\u3059\u3002\u6240\u6301\u54C1\u304B\u3089\u30D7\u30E9\u30F3\u3092\u4F5C\u6210\u3057\u307E\u3059\u3002",
+            "manual.step2" => "2. build item manual plan \u3092\u62BC\u3057\u3001\u5BFE\u8C61\u30D7\u30EC\u30A4\u30E4\u30FC\u3092\u78BA\u8A8D\u3057\u307E\u3059\u3002",
+            "manual.step3" => "3. auto start \u3092\u62BC\u3059\u3068\u3001\u30D7\u30E9\u30F3\u5185\u306E\u7269\u54C1\u3092\u81EA\u52D5\u3067\u4EA4\u6613\u3057\u307E\u3059\u3002",
+            "manual.filterHint" => "\u30A2\u30A4\u30C6\u30E0\u540D\u3067\u7D5E\u308A\u8FBC\u307F...",
+            "manual.showSelectedOnly" => "\u9078\u629E\u6E08\u307F\u306E\u307F\u8868\u793A",
+            "manual.clearQty" => "\u6570\u91CF\u30AF\u30EA\u30A2",
+            "manual.refresh" => "\u66F4\u65B0",
+            "manual.openInventory" => "Inventory Items \u3092\u958B\u304F",
+            "manual.selectAllSalvaged" => "salvaged item \u3092\u5168\u9078\u629E",
+            "manual.all" => "\u5168\u9078\u629E",
+            "manual.qty" => "\u6570\u91CF",
+            "manual.quality" => "\u54C1\u8CEA",
+            "manual.visibleTooltip" => "\u73FE\u5728\u8868\u793A\u4E2D\u306E\u7269\u54C1\u3092\u3059\u3079\u3066\u4EA4\u6613",
+            "shared.clearTradePlan" => "\u4EA4\u6613\u30D7\u30E9\u30F3\u3092\u30AF\u30EA\u30A2",
+            "gilToItem.inventoryItemValue" => "\u6240\u6301\u30A2\u30A4\u30C6\u30E0\u4FA1\u5024",
+            "gilToItem.step1" => "1. gil \u91D1\u984D\u3092\u5165\u529B",
+            "gilToItem.step2" => "2. gil to item trade plan \u30DC\u30BF\u30F3\u3092\u9078\u3093\u3067\u62BC\u3057\u307E\u3059",
+            "gilToItem.step3" => "3. auto start \u3092\u62BC\u3059\u3068\u3001\u30D7\u30E9\u30F3\u5185\u306E\u7269\u54C1\u3092\u81EA\u52D5\u3067\u4EA4\u6613\u3057\u307E\u3059\u3002",
+            "gilToItem.line1" => "- Build item trade plan: \u6240\u6301\u30A2\u30A4\u30C6\u30E0\u306E\u5408\u8A08\u4FA1\u5024\u304C\u8FD1\u3044\u30D7\u30E9\u30F3\u3092\u4F5C\u6210\u3057\u307E\u3059\u3002",
+            "gilToItem.line2" => "- Build salvaged item plan: salvaged item \u3060\u3051\u3067\u5408\u8A08\u4FA1\u5024\u304C\u8FD1\u3044\u30D7\u30E9\u30F3\u3092\u4F5C\u6210\u3057\u307E\u3059\u3002",
+            "gilToItem.line3" => "- Trade all salvaged item: \u3059\u3079\u3066\u306E salvaged item \u3092\u4EA4\u6613\u3059\u308B\u30D7\u30E9\u30F3\u3092\u4F5C\u6210\u3057\u307E\u3059\u3002",
+            "gilToItem.computing" => "\u30D7\u30E9\u30F3\u8A08\u7B97\u4E2D...",
+            "gilToItem.note" => "salvaged-only \u306B\u306F Necklace\u3001Earring\u3001Bracelet\u3001Ring \u3068 Extravagant \u7248\u304C\u542B\u307E\u308C\u307E\u3059\u3002",
+            _ => GetEnglishText(key),
+        };
     }
 
     public void Dispose()
