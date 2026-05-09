@@ -20,28 +20,28 @@ public sealed class InventoryWealthService
         InventoryType.Inventory4,
     };
 
-    private static readonly Dictionary<string, int> PriceOverrides = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<uint, int> PriceOverridesByItemId = new()
     {
-        ["Salvaged Ring"] = 8_000,
-        ["Salvaged Bracelet"] = 9_000,
-        ["Salvaged Earring"] = 10_000,
-        ["Salvaged Necklace"] = 13_000,
-        ["Extravagant Salvaged Ring"] = 27_000,
-        ["Extravagant Salvaged Bracelet"] = 28_500,
-        ["Extravagant Salvaged Earring"] = 30_000,
-        ["Extravagant Salvaged Necklace"] = 34_500,
+        [22500] = 8_000,
+        [22501] = 9_000,
+        [22502] = 10_000,
+        [22503] = 13_000,
+        [22504] = 27_000,
+        [22505] = 28_500,
+        [22506] = 30_000,
+        [22507] = 34_500,
     };
 
-    private static readonly HashSet<string> SalvagedTradeItemNames = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<uint> SalvagedTradeItemIds = new()
     {
-        "Salvaged Necklace",
-        "Salvaged Earring",
-        "Salvaged Bracelet",
-        "Salvaged Ring",
-        "Extravagant Salvaged Necklace",
-        "Extravagant Salvaged Earring",
-        "Extravagant Salvaged Bracelet",
-        "Extravagant Salvaged Ring",
+        22500,
+        22501,
+        22502,
+        22503,
+        22504,
+        22505,
+        22506,
+        22507,
     };
 
     private InventoryWealthSnapshot _cached = InventoryWealthSnapshot.Empty;
@@ -133,14 +133,14 @@ public sealed class InventoryWealthService
 
     public InventoryTradePlan BuildSalvagedTradePlan(long targetGil)
     {
-        return BuildTradePlan(targetGil, static entry => IsSalvagedTradeItem(entry.Name));
+        return BuildTradePlan(targetGil, static entry => IsSalvagedTradeItem(entry.BaseItemId));
     }
 
     public InventoryTradePlan BuildAllSalvagedTradePlan()
     {
         var snapshot = GetSnapshot();
         var entries = snapshot.Entries
-            .Where(entry => IsSalvagedTradeItem(entry.Name) && entry.UnitPrice > 0 && entry.Quantity > 0)
+            .Where(entry => IsSalvagedTradeItem(entry.BaseItemId) && entry.UnitPrice > 0 && entry.Quantity > 0)
             .OrderByDescending(entry => entry.TotalValue)
             .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
             .Select(entry => new InventoryTradePlanEntry(
@@ -419,7 +419,7 @@ public sealed class InventoryWealthService
                 if (!IsEligibleTradeItem(itemRow, slot, itemName))
                     continue;
 
-                var unitPrice = GetUnitPrice(itemName, itemRow);
+                var unitPrice = GetUnitPrice(itemId, itemName, itemRow);
                 var maxTradeQuantity = GetMaxTradeQuantity(itemRow);
                 bool isHighQuality = slot->IsHighQuality();
                 bool canBeHighQuality = isHighQuality || CanItemBeHighQuality(itemRow);
@@ -478,10 +478,10 @@ public sealed class InventoryWealthService
             entryList);
     }
 
-    private static long GetUnitPrice(string itemName, Item itemRow)
+    private static long GetUnitPrice(uint itemId, string itemName, Item itemRow)
     {
-        if (PriceOverrides.TryGetValue(itemName, out var overridePrice))
-            return overridePrice;
+        if (PriceOverridesByItemId.TryGetValue(itemId, out var itemIdOverridePrice))
+            return itemIdOverridePrice;
 
         return itemRow.PriceLow;
     }
@@ -550,9 +550,9 @@ public sealed class InventoryWealthService
                GetOptionalBoolProperty(itemRow, "AlwaysCollectable");
     }
 
-    public static bool IsSalvagedTradeItem(string itemName)
+    public static bool IsSalvagedTradeItem(uint itemId)
     {
-        return SalvagedTradeItemNames.Contains(itemName);
+        return SalvagedTradeItemIds.Contains(itemId);
     }
 
     private static InventoryTradePlan BuildGreedyPlan(long targetGil, InventoryWealthEntry[] candidates)

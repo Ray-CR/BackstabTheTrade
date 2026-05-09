@@ -70,13 +70,13 @@ This project is released under the GNU General Public License v3.0 (`GPL-3.0`).
 
 <a id="zh-hant"></a>
 
-## 繁體中文
+## 外掛功能
 
 Backstab The Trade 是一個 Dalamud 外掛，用來協助處理重複的遊戲內金錢與道具交易。
 
 ### Gil Trade Mode
 
-輸入你想交易的金額。外掛會建立交易計畫並協助完成交易。
+輸入你想交易的Gil。外掛會建立交易計畫並協助完成交易。
 
 ### Item Manual Mode
 
@@ -84,7 +84,7 @@ Backstab The Trade 是一個 Dalamud 外掛，用來協助處理重複的遊戲�
 
 ### Gil to Item Mode
 
-輸入你想支付的金額。外掛會從背包中建立接近該價值的道具交易計畫。
+輸入你想交易的Gil。外掛會從背包中建立接近該Gil價值的道具交易計畫。
 
 ### Receiver Mode
 
@@ -117,13 +117,13 @@ Time Settings 可調整各種延遲時間，方便配合你的遊戲環境、網
 
 <a id="zh-hans"></a>
 
-## 简体中文
+## 插件功能
 
 Backstab The Trade 是一个 Dalamud 插件，用来协助处理重复的游戏内金币与道具交易。
 
 ### Gil Trade Mode
 
-输入你想交易的金币数量。插件会建立交易计划并协助完成交易。
+输入你想交易的Gil。插件会建立交易计划并协助完成交易。
 
 ### Item Manual Mode
 
@@ -131,7 +131,7 @@ Backstab The Trade 是一个 Dalamud 插件，用来协助处理重复的游戏�
 
 ### Gil to Item Mode
 
-输入你想支付的金额。插件会从背包中建立接近该价值的道具交易计划。
+输入你想交易的Gil。插件会从背包中建立接近该Gil价值的道具交易计划,并协助完成交易。。
 
 ### Receiver Mode
 
@@ -164,7 +164,7 @@ Time Settings 可调整各种延迟时间，方便配合你的游戏环境、网
 
 <a id="ja"></a>
 
-## 日本語
+## 機能紹介
 
 Backstab The Trade は、ゲーム内でくり返し行うギル取引やアイテム取引を補助する Dalamud プラグインです。
 

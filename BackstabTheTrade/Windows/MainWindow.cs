@@ -131,7 +131,7 @@ public sealed class MainWindow : Window, IDisposable
         DrawSidebarButton(SidebarPage.Main, "Main");
         DrawSidebarButton(SidebarPage.GilTrade, "Gil Trade Mode");
         DrawSidebarButton(SidebarPage.ItemManual, "Item Manual Mode");
-        DrawSidebarButton(SidebarPage.GilToItem, "Gil to Item Trade Mode");
+        DrawSidebarButton(SidebarPage.GilToItem, "Gil to Item Mode");
         DrawSidebarButton(SidebarPage.ReceiverMode, "Receiver Mode");
         DrawSidebarButton(SidebarPage.TrackerWindows, "Tracker + Windows");
         DrawSidebarButton(SidebarPage.TimeSettings, "Time Settings");
@@ -175,7 +175,7 @@ public sealed class MainWindow : Window, IDisposable
                 break;
             case SidebarPage.GilToItem:
                 _mode = AutoTradeMode.GilToItem;
-                DrawTradePageHeader("Gil to Item Trade Mode", running);
+                DrawTradePageHeader("Gil to Item Mode", running);
                 DrawGilToItemMode();
                 DrawRunningStatus();
                 break;
@@ -270,24 +270,27 @@ public sealed class MainWindow : Window, IDisposable
     {
         var cfg = _plugin.Configuration;
         ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Receiver Mode");
-        ImGui.TextDisabled("Tick the box to auto press Trade and Yes / OK while you are receiving.");
+        ImGui.TextWrapped("Automatically press Trade and confirm Yes while you are receiving a trade.");
         ImGui.Separator();
 
         bool receiverMode = cfg.ReceiverModeAutoConfirm;
         ImGui.BeginDisabled(running || hasBuiltSendPlan);
-        if (ImGui.Checkbox("Receiver mode: auto Trade + OK", ref receiverMode))
+        if (ImGui.Checkbox("Receiver mode", ref receiverMode))
         {
             cfg.ReceiverModeAutoConfirm = receiverMode;
             cfg.Save();
         }
         ImGui.EndDisabled();
 
-        ImGui.SameLine();
-        if (ImGui.Button("Unlock Receive Mode", new Vector2(170, 0)))
+        if (ImGui.Button("Enable receiver mode", new Vector2(190, 0)))
         {
-            _itemTradePlan = InventoryTradePlan.Empty;
-            _manualItemQuantities.Clear();
-            _showSafetyPreview = false;
+            EnableReceiverMode();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Disable receiver mode", new Vector2(190, 0)))
+        {
+            DisableReceiverMode();
         }
 
         ImGui.Spacing();
@@ -296,18 +299,22 @@ public sealed class MainWindow : Window, IDisposable
         if (running)
             ImGui.TextColored(new Vector4(1f, 0.55f, 0.35f, 1f), "Receive mode cannot be changed while trading is running.");
 
-        ImGui.TextWrapped("Use Unlock Receive Mode to clear the current send plan when the receive tick box is unavailable.");
+        ImGui.TextWrapped("Enable receiver mode clears the current send plan and turns receiver mode on.");
     }
 
     private void DrawTrackerWindowsPage()
     {
         ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Tracker + Windows");
-        ImGui.TextDisabled("Open the helper windows from here.");
+        ImGui.TextWrapped("Open the helper windows from here.");
         ImGui.Separator();
 
-        if (ImGui.Button("Open Track Log", new Vector2(-1, 26)))
+        float trackerButtonGap = 8f;
+        float trackerButtonWidth = (ImGui.GetContentRegionAvail().X - trackerButtonGap) * 0.5f;
+
+        if (ImGui.Button("Open Track Log", new Vector2(trackerButtonWidth, 26)))
             _openTracker();
-        if (ImGui.Button("Open Trade History Window", new Vector2(-1, 26)))
+        ImGui.SameLine(0f, trackerButtonGap);
+        if (ImGui.Button("Open Trade History Window", new Vector2(trackerButtonWidth, 26)))
             _openTradeHistory();
 
         ImGui.Spacing();
@@ -447,12 +454,15 @@ public sealed class MainWindow : Window, IDisposable
 
     private void DrawManualItemMode()
     {
+        const float inlineButtonGap = 8f;
         var snapshot = _plugin.InventoryWealth.GetSnapshot();
         DrawAutoStartControls();
         ImGui.Spacing();
         ImGui.BeginDisabled(_tm.IsRunning);
         ImGui.Text("Manual Item Selection:");
-        ImGui.TextDisabled("Enter the total quantity you want to trade. The plugin plans from items that already exist in your inventory.");
+        ImGui.TextWrapped("1. Select and enter the quantity you want to trade. The plugin plans from items that already exist in your inventory.");
+        ImGui.TextWrapped("2. Press the build item manual plan, confirm the target player.");
+        ImGui.TextWrapped("3. Press auto start, then plugin will trade all item selected by the plan automatically.");
 
         ImGui.SetNextItemWidth(-1);
         ImGui.InputTextWithHint("##manualItemFilter", "Filter item name...", ref _manualItemFilter, 64);
@@ -474,6 +484,19 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.SameLine();
         if (ImGui.SmallButton("Open Inventory Items"))
             _openInventoryWealth();
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Select all salvaged item"))
+        {
+            foreach (var entry in snapshot.Entries)
+            {
+                if (!InventoryWealthService.IsSalvagedTradeItem(entry.BaseItemId) || entry.Quantity <= 0)
+                    continue;
+
+                _manualItemQuantities[entry.ItemId] = entry.Quantity;
+            }
+
+            _manualSelectionVersion++;
+        }
 
         var visibleEntries = GetCachedManualVisibleEntries(snapshot);
 
@@ -593,14 +616,16 @@ public sealed class MainWindow : Window, IDisposable
         }
         ImGui.EndChild();
 
-        if (ImGui.Button("Build Manual Item Plan", new Vector2(-1, 24)))
+        float manualButtonWidth = (ImGui.GetContentRegionAvail().X - inlineButtonGap) * 0.5f;
+        if (ImGui.Button("Build Manual Item Plan", new Vector2(manualButtonWidth, 24)))
         {
             _itemTradePlan = _plugin.InventoryWealth.BuildTradePlanFromSelections(_manualItemQuantities);
             _showSafetyPreview = false;
             DisableReceiverModeForSendPlan();
         }
 
-        if (ImGui.Button("Clear Trade Plan", new Vector2(-1, 24)))
+        ImGui.SameLine(0f, inlineButtonGap);
+        if (ImGui.Button("Clear Trade Plan", new Vector2(manualButtonWidth, 24)))
         {
             _itemTradePlan = InventoryTradePlan.Empty;
             _showSafetyPreview = false;
@@ -612,6 +637,7 @@ public sealed class MainWindow : Window, IDisposable
 
     private void DrawGilToItemMode()
     {
+        const float inlineButtonGap = 8f;
         var snapshot = _plugin.InventoryWealth.GetSnapshot();
         DrawAutoStartControls();
         ImGui.Spacing();
@@ -619,7 +645,12 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.TextColored(new Vector4(0.6f, 0.9f, 1f, 1f), $"Inventory Item Value: {snapshot.TotalItemValue:N0}");
         ImGui.Spacing();
         ImGui.Text("Gil to Item Trade");
-        ImGui.TextDisabled("Trade items to the receiver based on the same gil value.");
+        ImGui.TextWrapped("1. Enter the amount of gil");
+        ImGui.TextWrapped("2. Select and press gil to item trade plan button");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "- Build item trade plan: build a trade plan using inventory items with a similar total value.");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "- Build salvaged item plan: build a trade plan using salvaged item only with a similar total value.");
+        ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "- Trade all salvaged item: build a trade plan to trade all the salvaged item.");
+        ImGui.TextWrapped("3. Press auto start, then plugin will trade all item selected by the plan automatically.");
         ImGui.SetNextItemWidth(-1);
         ImGui.InputText("##itemTargetValue", ref _itemTargetValueText, 24);
 
@@ -627,7 +658,9 @@ public sealed class MainWindow : Window, IDisposable
             ImGui.TextColored(new Vector4(1f, 0.85f, 0.2f, 1f), "Computing plan...");
         ImGui.BeginDisabled(_pendingPlanTask is { IsCompleted: false });
 
-        if (ImGui.Button("Build Item Trade Plan", new Vector2(-1, 24)))
+        float fourButtonWidth = (ImGui.GetContentRegionAvail().X - (inlineButtonGap * 3f)) * 0.25f;
+
+        if (ImGui.Button("Build Item Trade Plan", new Vector2(fourButtonWidth, 24)))
         {
             if (long.TryParse(_itemTargetValueText, out var targetValue) && targetValue > 0)
                 StartPlanTask(() => _plugin.InventoryWealth.BuildTradePlan(targetValue));
@@ -638,7 +671,8 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
-        if (ImGui.Button("Build Salvaged Item Plan", new Vector2(-1, 24)))
+        ImGui.SameLine(0f, inlineButtonGap);
+        if (ImGui.Button("Build Salvaged Item Plan", new Vector2(fourButtonWidth, 24)))
         {
             if (long.TryParse(_itemTargetValueText, out var targetValue) && targetValue > 0)
                 StartPlanTask(() => _plugin.InventoryWealth.BuildSalvagedTradePlan(targetValue));
@@ -649,20 +683,22 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
-        if (ImGui.Button("Trade All Salvaged Items", new Vector2(-1, 24)))
+        ImGui.SameLine(0f, inlineButtonGap);
+        if (ImGui.Button("Trade All Salvaged Items", new Vector2(fourButtonWidth, 24)))
         {
             StartPlanTask(() => _plugin.InventoryWealth.BuildAllSalvagedTradePlan());
         }
 
-        ImGui.EndDisabled();
-
-        if (ImGui.Button("Clear Trade Plan", new Vector2(-1, 24)))
+        ImGui.SameLine(0f, inlineButtonGap);
+        if (ImGui.Button("Clear Trade Plan", new Vector2(fourButtonWidth, 24)))
         {
             _itemTradePlan = InventoryTradePlan.Empty;
             _showSafetyPreview = false;
         }
 
-        ImGui.TextDisabled("Salvaged-only includes Necklace, Earring, Bracelet, Ring, and Extravagant versions.");
+        ImGui.EndDisabled();
+
+        ImGui.TextWrapped("Salvaged-only includes Necklace, Earring, Bracelet, Ring, and Extravagant versions.");
 
         DrawTradePlanSummary(_itemTradePlan);
         ImGui.EndDisabled();
@@ -940,6 +976,13 @@ public sealed class MainWindow : Window, IDisposable
             DisableReceiverMode();
     }
 
+    private void EnableReceiverMode()
+    {
+        ClearSendPlanState();
+        _plugin.Configuration.ReceiverModeAutoConfirm = true;
+        _plugin.Configuration.Save();
+    }
+
     private void DisableReceiverMode()
     {
         if (!_plugin.Configuration.ReceiverModeAutoConfirm)
@@ -947,6 +990,13 @@ public sealed class MainWindow : Window, IDisposable
 
         _plugin.Configuration.ReceiverModeAutoConfirm = false;
         _plugin.Configuration.Save();
+    }
+
+    private void ClearSendPlanState()
+    {
+        _itemTradePlan = InventoryTradePlan.Empty;
+        _manualItemQuantities.Clear();
+        _showSafetyPreview = false;
     }
 
     private void ClearTargetName(string reason)
