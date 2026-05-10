@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 
 namespace BackstabTheTrade;
@@ -13,6 +15,7 @@ namespace BackstabTheTrade;
 public sealed class MainWindow : Window, IDisposable
 {
     private const int PlayerObjectKindValue = 1;
+    private const string KoFiUrl = "https://ko-fi.com/ray_cr";
 
     private enum SidebarPage
     {
@@ -94,6 +97,8 @@ public sealed class MainWindow : Window, IDisposable
         _openTracker = openTracker;
         _openTradeHistory = openTradeHistory;
         _openInventoryWealth = openInventoryWealth;
+
+        AddKoFiTitleBarButton();
     }
 
     public void SetTarget(string name)
@@ -101,6 +106,18 @@ public sealed class MainWindow : Window, IDisposable
         _targetName = name;
         if (!string.IsNullOrWhiteSpace(name))
             _recentTargetName = name.Trim();
+    }
+
+    private void AddKoFiTitleBarButton()
+    {
+        TitleBarButtons.Add(new TitleBarButton
+        {
+            Icon = FontAwesomeIcon.Heart,
+            IconColor = new Vector4(1f, 0.95f, 0.95f, 1f),
+            ShowTooltip = () => ImGui.SetTooltip("Ko-Fi"),
+            Click = _ => OpenUrl(KoFiUrl),
+            Priority = int.MaxValue,
+        });
     }
 
     public override void Draw()
@@ -1143,6 +1160,22 @@ public sealed class MainWindow : Window, IDisposable
 
         if (selected)
             ImGui.PopStyleColor();
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            BackstabTheTrade.Log.Warning(ex, "Failed to open support URL.");
+        }
     }
 
     private string T(string key)
