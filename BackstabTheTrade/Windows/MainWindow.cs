@@ -399,6 +399,7 @@ public sealed class MainWindow : Window, IDisposable
         DrawTimingSlider(cfg.ReceiverPollDelayMs, 10, 500, "timing_embedded_receiver_poll", "Receiver poll delay", "30-80", v => cfg.ReceiverPollDelayMs = v, cfg);
         DrawTimingSlider(cfg.ReceiverChangedPollDelayMs, 10, 500, "timing_embedded_receiver_changed_poll", "Receiver changed poll delay", "20-60", v => cfg.ReceiverChangedPollDelayMs = v, cfg);
         DrawTimingSlider(cfg.YesButtonDelayMs, 0, 2000, "timing_embedded_dyes", "Before Yes button", "0-150", v => cfg.YesButtonDelayMs = v, cfg);
+        DrawTimingSlider(cfg.YesConfirmRetryDelayMs, 50, 1000, "timing_embedded_yes_retry", "Yes button retry", "80-150", v => cfg.YesConfirmRetryDelayMs = v, cfg);
 
         ImGui.Spacing();
         ImGui.Separator();

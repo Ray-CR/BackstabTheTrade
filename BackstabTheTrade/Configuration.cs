@@ -38,6 +38,9 @@ public class Configuration : IPluginConfiguration
     // Delay after SelectYesno opens before pressing Yes
     public int YesButtonDelayMs { get; set; } = 0;
 
+    // Delay before retrying Yes if SelectYesno did not accept the first click.
+    public int YesConfirmRetryDelayMs { get; set; } = 150;
+
     // Delay before triggering the planned item context-menu Trade callback.
     public int PlannedContextMenuTriggerDelayMs { get; set; } = 60;
 

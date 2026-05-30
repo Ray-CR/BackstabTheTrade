@@ -84,6 +84,11 @@ public sealed class TradeManager : IDisposable
     private bool _receiverHistoryStartedForWindow;
     private string _receiverWindowSummary = string.Empty;
     private string _receiverOfferStableSummary = string.Empty;
+    private YesConfirmOwner _yesConfirmOwner = YesConfirmOwner.None;
+    private bool _yesConfirmClicked;
+    private DateTime _yesConfirmVisibleSince = DateTime.MinValue;
+    private DateTime _yesConfirmNextRetryAt = DateTime.MinValue;
+    private bool _yesConfirmLoggedWaiting;
     private bool _passiveTradeTrackingActive;
     private DateTime _passiveTradeFinalizeAt = DateTime.MinValue;
     private long _passiveBeforeGil;
@@ -108,6 +113,13 @@ public sealed class TradeManager : IDisposable
         WaitTradeClose,
         WaitRetryTradeClosed,
         WaitManualTradeReopen,
+    }
+
+    private enum YesConfirmOwner
+    {
+        None,
+        Sender,
+        Receiver,
     }
 
     private Step _step = Step.Idle;
@@ -897,6 +909,7 @@ public sealed class TradeManager : IDisposable
                     _tradeCloseObservedAt = DateTime.MinValue;
                     _tradeConfirmSeenForWindow = false;
                     _tradePostCloseGraceApplied = false;
+                    ArmYesConfirm(YesConfirmOwner.Sender);
                     StatusMessage = "Trade button clicked - waiting for partner...";
                     _step = Step.WaitTradeClose;
                     _tradeCloseDeadline = DateTime.Now.AddSeconds(60);
@@ -909,11 +922,11 @@ public sealed class TradeManager : IDisposable
                 break;
 
             case Step.WaitTradeClose:
-                if (TryConfirmTradeYes())
+                if (TryTickYesConfirm(YesConfirmOwner.Sender))
                 {
                     _tradeConfirmSeenForWindow = true;
                     StatusMessage = "Confirming trade...";
-                    Delay(Math.Max(0, _plugin.Configuration.YesButtonDelayMs), Step.WaitTradeClose);
+                    Delay(Math.Max(50, _plugin.Configuration.YesConfirmRetryDelayMs), Step.WaitTradeClose);
                     break;
                 }
 
@@ -938,6 +951,8 @@ public sealed class TradeManager : IDisposable
 
                 if (!TradeWindowOpen)
                 {
+                    ResetYesConfirm(YesConfirmOwner.Sender);
+
                     if (_tradeCloseObservedAt == DateTime.MinValue)
                     {
                         _tradeCloseObservedAt = DateTime.Now;
@@ -1290,6 +1305,97 @@ public sealed class TradeManager : IDisposable
         _step = next;
     }
 
+    private void ArmYesConfirm(YesConfirmOwner owner)
+    {
+        if (_yesConfirmOwner == owner)
+            return;
+
+        _yesConfirmOwner = owner;
+        _yesConfirmClicked = false;
+        _yesConfirmVisibleSince = DateTime.MinValue;
+        _yesConfirmNextRetryAt = DateTime.MinValue;
+        _yesConfirmLoggedWaiting = false;
+        TrackVerbose($"[YesGuard] Armed {owner}.");
+    }
+
+    private bool TryTickYesConfirm(YesConfirmOwner owner)
+    {
+        if (_yesConfirmOwner != owner || _yesConfirmClicked)
+            return false;
+
+        if (!IsTradeConfirmWindowVisible())
+        {
+            if (_yesConfirmVisibleSince != DateTime.MinValue)
+                TrackVerbose($"[YesGuard] SelectYesno not visible for {owner}; waiting.");
+
+            _yesConfirmVisibleSince = DateTime.MinValue;
+            _yesConfirmNextRetryAt = DateTime.MinValue;
+            _yesConfirmLoggedWaiting = false;
+            return false;
+        }
+
+        if (_yesConfirmVisibleSince == DateTime.MinValue)
+        {
+            _yesConfirmVisibleSince = DateTime.Now;
+            _yesConfirmNextRetryAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
+            TrackVerbose($"[YesGuard] SelectYesno visible for {owner}; waiting {_plugin.Configuration.YesButtonDelayMs} ms before Yes.");
+            return false;
+        }
+
+        if (DateTime.Now < _yesConfirmNextRetryAt)
+        {
+            if (!_yesConfirmLoggedWaiting)
+            {
+                _yesConfirmLoggedWaiting = true;
+                var remainingMs = Math.Max(0, (int)(_yesConfirmNextRetryAt - DateTime.Now).TotalMilliseconds);
+                TrackVerbose($"[YesGuard] Waiting Before Yes button for {owner}; remaining about {remainingMs} ms.");
+            }
+
+            return false;
+        }
+
+        if (!TryConfirmTradeYes())
+        {
+            var retryMs = Math.Max(50, _plugin.Configuration.YesConfirmRetryDelayMs);
+            _yesConfirmNextRetryAt = DateTime.Now.AddMilliseconds(retryMs);
+            TrackVerbose($"[YesGuard] Retry Yes for {owner} failed; retrying in {retryMs} ms.");
+            return false;
+        }
+
+        _yesConfirmClicked = true;
+        TrackVerbose($"[YesGuard] Yes click fired for {owner}.");
+        return true;
+    }
+
+    private bool IsYesConfirmPending(YesConfirmOwner owner)
+    {
+        return _yesConfirmOwner == owner && !_yesConfirmClicked;
+    }
+
+    private void ResetYesConfirm(YesConfirmOwner owner)
+    {
+        if (_yesConfirmOwner != owner)
+            return;
+
+        TrackVerbose($"[YesGuard] Reset {owner}.");
+        _yesConfirmOwner = YesConfirmOwner.None;
+        _yesConfirmClicked = false;
+        _yesConfirmVisibleSince = DateTime.MinValue;
+        _yesConfirmNextRetryAt = DateTime.MinValue;
+        _yesConfirmLoggedWaiting = false;
+    }
+
+    private void MarkReceiverYesConfirmed(string logMessage)
+    {
+        _receiverConfirmedForWindow = true;
+        _receiverTradeClickedForWindow = true;
+        _receiverConfirmedAt = DateTime.Now;
+        CaptureReceiverOfferSnapshot();
+        AddTradeHistory("Confirmed", GetReceiverTradeSummary(), "Receiver mode confirmed Complete trade?", "Receiver", 0);
+        TrackVerbose(logMessage);
+        StatusMessage = "Receiver mode: Complete trade? detected - confirming Yes...";
+    }
+
     private void TickReceiverMode()
     {
         var receiverPollMs = Math.Max(10, _plugin.Configuration.ReceiverPollDelayMs);
@@ -1307,38 +1413,26 @@ public sealed class TradeManager : IDisposable
         bool confirmWindowOpen = IsAddonVisible("SelectYesno") || IsAddonVisible("SelectYesNo");
         if (confirmWindowOpen)
         {
+            if (_receiverConfirmedForWindow)
+            {
+                StatusMessage = "Receiver mode: confirmed; waiting for trade to close...";
+                _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
+                return;
+            }
+
             if (!ShouldAutoConfirmReceiverYesNo())
             {
                 _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
                 return;
             }
 
-            StatusMessage = "Receiver mode: Complete trade? detected - confirming Yes...";
-            if (TryConfirmTradeYes())
-            {
-                _receiverConfirmedForWindow = true;
-                _receiverTradeClickedForWindow = true;
-                _receiverConfirmedAt = DateTime.Now;
-                TrackVerbose("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
-                _receiverNextActionAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
-            }
-            else
-            {
-                _receiverNextActionAt = DateTime.Now.AddMilliseconds(100);
-            }
+            ArmYesConfirm(YesConfirmOwner.Receiver);
+            StatusMessage = "Receiver mode: Complete trade? detected - waiting before Yes...";
+            if (TryTickYesConfirm(YesConfirmOwner.Receiver))
+                MarkReceiverYesConfirmed("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
 
-            return;
-        }
+            _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
 
-        if (ShouldAutoConfirmReceiverYesNo() && TryConfirmTradeYes())
-        {
-            _receiverConfirmedForWindow = true;
-            _receiverTradeClickedForWindow = true;
-            _receiverConfirmedAt = DateTime.Now;
-            CaptureReceiverOfferSnapshot();
-            AddTradeHistory("Confirmed", GetReceiverTradeSummary(), "Receiver mode confirmed Complete trade?", "Receiver", 0);
-            TrackVerbose("[ReceiverMode] Confirm Yes/OK fired.");
-            _receiverNextActionAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
             return;
         }
 
@@ -1383,10 +1477,21 @@ public sealed class TradeManager : IDisposable
 
         if (!HasIncomingTradeOffer())
         {
+            if (IsYesConfirmPending(YesConfirmOwner.Receiver))
+            {
+                StatusMessage = "Receiver mode: waiting for Complete trade? confirmation...";
+                if (TryTickYesConfirm(YesConfirmOwner.Receiver))
+                    MarkReceiverYesConfirmed("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
+
+                _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
+                return;
+            }
+
             _receiverOfferSeenForWindow = false;
             _receiverOfferFirstSeenAt = DateTime.MinValue;
             _receiverOfferLastChangedAt = DateTime.MinValue;
             _receiverOfferStableSummary = string.Empty;
+            ResetYesConfirm(YesConfirmOwner.Receiver);
             StatusMessage = "Receiver mode: waiting for partner offer...";
             _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
             return;
@@ -1408,10 +1513,21 @@ public sealed class TradeManager : IDisposable
             if (!string.IsNullOrEmpty(_receiverTradeClickOfferSummary) &&
                 !string.Equals(_receiverTradeClickOfferSummary, currentOfferSummary, StringComparison.Ordinal))
             {
+                if (IsYesConfirmPending(YesConfirmOwner.Receiver))
+                {
+                    StatusMessage = "Receiver mode: Complete trade? confirmation open; holding Yes guard...";
+                    if (TryTickYesConfirm(YesConfirmOwner.Receiver))
+                        MarkReceiverYesConfirmed("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
+
+                    _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
+                    return;
+                }
+
                 _receiverTradeClickedForWindow = false;
                 _receiverOfferStableSummary = currentOfferSummary;
                 _receiverOfferLastChangedAt = DateTime.Now;
                 _receiverWindowSummary = currentOfferSummary;
+                ResetYesConfirm(YesConfirmOwner.Receiver);
                 StatusMessage = "Receiver mode: partner offer changed after Trade; waiting to settle...";
                 TrackVerbose("[ReceiverMode] Partner offer changed after Trade click; waiting to settle again.");
                 _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverChangedPollMs);
@@ -1468,6 +1584,7 @@ public sealed class TradeManager : IDisposable
             _receiverTradeClickedForWindow = true;
             _receiverTradeClickedAt = DateTime.Now;
             _receiverTradeClickOfferSummary = currentOfferSummary;
+            ArmYesConfirm(YesConfirmOwner.Receiver);
             CaptureReceiverOfferSnapshot();
             AddTradeHistory("TradeClicked", GetReceiverTradeSummary(), "Receiver mode clicked Trade", "Receiver", 0);
             TrackVerbose("[ReceiverMode] Trade callback fired.");
@@ -1490,6 +1607,7 @@ public sealed class TradeManager : IDisposable
         _receiverOfferLastChangedAt = DateTime.MinValue;
         _receiverTradeClickedAt = DateTime.MinValue;
         _receiverTradeClickOfferSummary = string.Empty;
+        ResetYesConfirm(YesConfirmOwner.Receiver);
     }
 
     private void TickPassiveTradeHistory(bool tradeWindowVisible)
@@ -2032,8 +2150,9 @@ public sealed class TradeManager : IDisposable
 
         if (IsRunning && _step == Step.WaitTradeClose)
         {
+            ArmYesConfirm(YesConfirmOwner.Sender);
             StatusMessage = "Trade confirm popup open.";
-            _nextActionAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
+            _nextActionAt = DateTime.Now;
             return;
         }
 
@@ -2046,17 +2165,9 @@ public sealed class TradeManager : IDisposable
         if (!ShouldAutoConfirmReceiverYesNo())
             return;
 
-        if (!TryConfirmTradeYes())
-            return;
-
-        _receiverConfirmedForWindow = true;
-        _receiverTradeClickedForWindow = true;
-        _receiverConfirmedAt = DateTime.Now;
-        CaptureReceiverOfferSnapshot();
-        AddTradeHistory("Confirmed", GetReceiverTradeSummary(), "Receiver mode confirmed Complete trade?", "Receiver", 0);
-        TrackVerbose("[ReceiverMode] Complete trade? setup hook detected; Yes/OK fired.");
-        StatusMessage = "Receiver mode: Complete trade? detected - confirming Yes...";
-        _receiverNextActionAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
+        ArmYesConfirm(YesConfirmOwner.Receiver);
+        StatusMessage = "Receiver mode: Complete trade? setup hook detected - waiting before Yes...";
+        _receiverNextActionAt = DateTime.Now;
     }
 
     private unsafe bool ShouldAutoConfirmReceiverYesNo()
