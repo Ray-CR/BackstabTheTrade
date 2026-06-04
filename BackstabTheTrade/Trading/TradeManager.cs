@@ -1372,6 +1372,11 @@ public sealed class TradeManager : IDisposable
         return _yesConfirmOwner == owner && !_yesConfirmClicked;
     }
 
+    private bool IsReceiverYesConfirmWindowPending()
+    {
+        return IsYesConfirmPending(YesConfirmOwner.Receiver) && IsTradeConfirmWindowVisible();
+    }
+
     private void ResetYesConfirm(YesConfirmOwner owner)
     {
         if (_yesConfirmOwner != owner)
@@ -1504,6 +1509,7 @@ public sealed class TradeManager : IDisposable
             return;
         }
 
+        var currentOfferFingerprint = BuildIncomingTradeFingerprint();
         var currentOfferSummary = BuildIncomingTradeSummary();
 
         if (_receiverTradeClickedForWindow)
@@ -1518,9 +1524,9 @@ public sealed class TradeManager : IDisposable
             }
 
             if (!string.IsNullOrEmpty(_receiverTradeClickOfferSummary) &&
-                !string.Equals(_receiverTradeClickOfferSummary, currentOfferSummary, StringComparison.Ordinal))
+                !string.Equals(_receiverTradeClickOfferSummary, currentOfferFingerprint, StringComparison.Ordinal))
             {
-                if (IsYesConfirmPending(YesConfirmOwner.Receiver))
+                if (IsReceiverYesConfirmWindowPending())
                 {
                     StatusMessage = "Receiver mode: Complete trade? confirmation open; holding Yes guard...";
                     TryConfirmReceiverYes("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
@@ -1530,12 +1536,12 @@ public sealed class TradeManager : IDisposable
                 }
 
                 _receiverTradeClickedForWindow = false;
-                _receiverOfferStableSummary = currentOfferSummary;
+                _receiverOfferStableSummary = currentOfferFingerprint;
                 _receiverOfferLastChangedAt = DateTime.Now;
                 _receiverWindowSummary = currentOfferSummary;
                 ResetYesConfirm(YesConfirmOwner.Receiver);
                 StatusMessage = "Receiver mode: partner offer changed after Trade; waiting to settle...";
-                TrackVerbose("[ReceiverMode] Partner offer changed after Trade click; waiting to settle again.");
+                TrackVerbose($"[ReceiverMode] Partner offer changed after Trade click; waiting to settle again. {_receiverTradeClickOfferSummary} -> {currentOfferFingerprint}");
                 _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverChangedPollMs);
                 return;
             }
@@ -1550,7 +1556,7 @@ public sealed class TradeManager : IDisposable
             _receiverOfferSeenForWindow = true;
             _receiverOfferFirstSeenAt = DateTime.Now;
             _receiverOfferLastChangedAt = DateTime.Now;
-            _receiverOfferStableSummary = currentOfferSummary;
+            _receiverOfferStableSummary = currentOfferFingerprint;
             _receiverWindowSummary = currentOfferSummary;
             if (!_receiverHistoryStartedForWindow)
             {
@@ -1563,13 +1569,14 @@ public sealed class TradeManager : IDisposable
             return;
         }
 
-        if (!string.Equals(_receiverOfferStableSummary, currentOfferSummary, StringComparison.Ordinal))
+        if (!string.Equals(_receiverOfferStableSummary, currentOfferFingerprint, StringComparison.Ordinal))
         {
-            _receiverOfferStableSummary = currentOfferSummary;
+            var previousOfferFingerprint = _receiverOfferStableSummary;
+            _receiverOfferStableSummary = currentOfferFingerprint;
             _receiverOfferLastChangedAt = DateTime.Now;
             _receiverWindowSummary = currentOfferSummary;
             StatusMessage = "Receiver mode: partner offer changed; waiting to settle...";
-            TrackVerbose("[ReceiverMode] Partner offer changed; waiting to settle again.");
+            TrackVerbose($"[ReceiverMode] Partner offer changed; waiting to settle again. {previousOfferFingerprint} -> {currentOfferFingerprint}");
             _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverChangedPollMs);
             return;
         }
@@ -1589,7 +1596,7 @@ public sealed class TradeManager : IDisposable
         {
             _receiverTradeClickedForWindow = true;
             _receiverTradeClickedAt = DateTime.Now;
-            _receiverTradeClickOfferSummary = currentOfferSummary;
+            _receiverTradeClickOfferSummary = currentOfferFingerprint;
             ArmYesConfirm(YesConfirmOwner.Receiver);
             CaptureReceiverOfferSnapshot();
             AddTradeHistory("TradeClicked", GetReceiverTradeSummary(), "Receiver mode clicked Trade", "Receiver", 0);
@@ -2651,6 +2658,23 @@ public sealed class TradeManager : IDisposable
         return parts.Count == 0
             ? "Incoming trade"
             : string.Join(", ", parts);
+    }
+
+    private static unsafe string BuildIncomingTradeFingerprint()
+    {
+        var manager = InventoryManager.Instance();
+        if (manager == null)
+            return "remote:<unavailable>";
+
+        var partnerSlots = manager->TradeItemsRemote;
+        var parts = new List<string>(6);
+        for (var i = 0; i < 6; i++)
+        {
+            var slot = partnerSlots[i];
+            parts.Add($"{i}:{slot.ItemId}:{slot.Quantity}");
+        }
+
+        return string.Join("|", parts);
     }
 
     private static unsafe bool TryInventoryNodeDispatch(
