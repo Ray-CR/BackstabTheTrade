@@ -9,7 +9,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>BackstabTheTrade</AssemblyName>
     <RootNamespace>BackstabTheTrade</RootNamespace>
-    <Version>1.0.0.3</Version>
+    <Version>1.0.0.4</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <!-- Suppress the version-conflict warnings ??they are harmless -->

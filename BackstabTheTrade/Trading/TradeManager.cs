@@ -1323,10 +1323,10 @@ public sealed class TradeManager : IDisposable
         if (_yesConfirmOwner != owner || _yesConfirmClicked)
             return false;
 
-        if (!IsTradeConfirmWindowVisible())
+        if (!IsCompleteTradeConfirmWindowVisible())
         {
             if (_yesConfirmVisibleSince != DateTime.MinValue)
-                TrackVerbose($"[YesGuard] SelectYesno not visible for {owner}; waiting.");
+                TrackVerbose($"[YesGuard] Complete trade window not visible for {owner}; waiting.");
 
             _yesConfirmVisibleSince = DateTime.MinValue;
             _yesConfirmNextRetryAt = DateTime.MinValue;
@@ -1338,7 +1338,7 @@ public sealed class TradeManager : IDisposable
         {
             _yesConfirmVisibleSince = DateTime.Now;
             _yesConfirmNextRetryAt = DateTime.Now.AddMilliseconds(Math.Max(0, _plugin.Configuration.YesButtonDelayMs));
-            TrackVerbose($"[YesGuard] SelectYesno visible for {owner}; waiting {_plugin.Configuration.YesButtonDelayMs} ms before Yes.");
+            TrackVerbose($"[YesGuard] Complete trade window visible for {owner}; waiting {_plugin.Configuration.YesButtonDelayMs} ms before Yes.");
             return false;
         }
 
@@ -1396,6 +1396,15 @@ public sealed class TradeManager : IDisposable
         StatusMessage = "Receiver mode: Complete trade? detected - confirming Yes...";
     }
 
+    private bool TryConfirmReceiverYes(string logMessage)
+    {
+        if (!TryTickYesConfirm(YesConfirmOwner.Receiver))
+            return false;
+
+        MarkReceiverYesConfirmed(logMessage);
+        return true;
+    }
+
     private void TickReceiverMode()
     {
         var receiverPollMs = Math.Max(10, _plugin.Configuration.ReceiverPollDelayMs);
@@ -1410,7 +1419,7 @@ public sealed class TradeManager : IDisposable
         if (DateTime.Now < _receiverNextActionAt)
             return;
 
-        bool confirmWindowOpen = IsAddonVisible("SelectYesno") || IsAddonVisible("SelectYesNo");
+        bool confirmWindowOpen = IsTradeConfirmWindowVisible();
         if (confirmWindowOpen)
         {
             if (_receiverConfirmedForWindow)
@@ -1428,8 +1437,7 @@ public sealed class TradeManager : IDisposable
 
             ArmYesConfirm(YesConfirmOwner.Receiver);
             StatusMessage = "Receiver mode: Complete trade? detected - waiting before Yes...";
-            if (TryTickYesConfirm(YesConfirmOwner.Receiver))
-                MarkReceiverYesConfirmed("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
+            TryConfirmReceiverYes("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
 
             _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
 
@@ -1480,8 +1488,7 @@ public sealed class TradeManager : IDisposable
             if (IsYesConfirmPending(YesConfirmOwner.Receiver))
             {
                 StatusMessage = "Receiver mode: waiting for Complete trade? confirmation...";
-                if (TryTickYesConfirm(YesConfirmOwner.Receiver))
-                    MarkReceiverYesConfirmed("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
+                TryConfirmReceiverYes("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
 
                 _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
                 return;
@@ -1516,8 +1523,7 @@ public sealed class TradeManager : IDisposable
                 if (IsYesConfirmPending(YesConfirmOwner.Receiver))
                 {
                     StatusMessage = "Receiver mode: Complete trade? confirmation open; holding Yes guard...";
-                    if (TryTickYesConfirm(YesConfirmOwner.Receiver))
-                        MarkReceiverYesConfirmed("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
+                    TryConfirmReceiverYes("[ReceiverMode] Complete trade? detected; Yes/OK fired.");
 
                     _receiverNextActionAt = DateTime.Now.AddMilliseconds(receiverPollMs);
                     return;
@@ -2308,6 +2314,29 @@ public sealed class TradeManager : IDisposable
     private static bool IsTradeConfirmWindowVisible()
     {
         return IsAddonVisible("SelectYesno") || IsAddonVisible("SelectYesNo");
+    }
+
+    private static bool IsCompleteTradeConfirmWindowVisible()
+    {
+        // The addon can be allocated before the Yes button is ready; only click once node 8 is usable.
+        return IsSelectYesnoReady("SelectYesno") || IsSelectYesnoReady("SelectYesNo");
+    }
+
+    private static unsafe bool IsSelectYesnoReady(string addonName)
+    {
+        var ptr = BackstabTheTrade.GameGui.GetAddonByName(addonName);
+        if (ptr.Address == nint.Zero)
+            return false;
+
+        var addon = (AtkUnitBase*)ptr.Address;
+        if (!addon->IsVisible)
+            return false;
+
+        var yesNode = addon->GetNodeById(8);
+        if (yesNode == null || !yesNode->IsVisible())
+            return false;
+
+        return yesNode->GetAsAtkComponentButton() != null;
     }
 
     private InventoryTradeBatch? GetCurrentBatch()
